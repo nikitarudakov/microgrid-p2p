@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import axios from "axios";
 
 const props = defineProps<{
   sellerUsername: string,
@@ -9,12 +8,29 @@ const props = defineProps<{
   kWhPrice: number,
 }>()
 
-const selectedEnergyCapacity = ref<number>(0);
-const submitPurchaseRequest = () => {
-  axios.post(`http://localhost:8080/`, {
-    "seller": props.sellerUsername,
-    "capacity": selectedEnergyCapacity.value,
-  })
+const selectedEnergyCapacity = ref<number | string>(0);
+async function submitPurchaseRequest() {
+    try {
+      const response = await fetch("http://localhost:8080/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          seller: props.sellerUsername,
+          capacity: Number(selectedEnergyCapacity.value),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Response:", data);
+    } catch (error) {
+      console.error("Error sending request:", error);
+    }
 }
 </script>
 
