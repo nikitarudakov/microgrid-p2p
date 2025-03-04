@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutation() MutationResolver
 	Query() QueryResolver
 }
 
@@ -46,18 +47,25 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	EnergyResource struct {
-		Capacity func(childComplexity int) int
-		ID       func(childComplexity int) int
-		OwnerID  func(childComplexity int) int
+		Capacity  func(childComplexity int) int
+		ID        func(childComplexity int) int
+		OwnerName func(childComplexity int) int
+	}
+
+	Mutation struct {
+		RegisterEnergyResource func(childComplexity int, ownerName string, capacity float64) int
 	}
 
 	Query struct {
-		EnergyResources func(childComplexity int, ownerID string) int
+		EnergyResources func(childComplexity int, ownerName string) int
 	}
 }
 
+type MutationResolver interface {
+	RegisterEnergyResource(ctx context.Context, ownerName string, capacity float64) (*model.EnergyResource, error)
+}
 type QueryResolver interface {
-	EnergyResources(ctx context.Context, ownerID string) ([]*model.EnergyResource, error)
+	EnergyResources(ctx context.Context, ownerName string) ([]*model.EnergyResource, error)
 }
 
 type executableSchema struct {
@@ -93,12 +101,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EnergyResource.ID(childComplexity), true
 
-	case "EnergyResource.owner_id":
-		if e.complexity.EnergyResource.OwnerID == nil {
+	case "EnergyResource.owner_name":
+		if e.complexity.EnergyResource.OwnerName == nil {
 			break
 		}
 
-		return e.complexity.EnergyResource.OwnerID(childComplexity), true
+		return e.complexity.EnergyResource.OwnerName(childComplexity), true
+
+	case "Mutation.registerEnergyResource":
+		if e.complexity.Mutation.RegisterEnergyResource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_registerEnergyResource_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RegisterEnergyResource(childComplexity, args["owner_name"].(string), args["capacity"].(float64)), true
 
 	case "Query.energy_resources":
 		if e.complexity.Query.EnergyResources == nil {
@@ -110,7 +130,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.EnergyResources(childComplexity, args["owner_id"].(string)), true
+		return e.complexity.Query.EnergyResources(childComplexity, args["owner_name"].(string)), true
 
 	}
 	return 0, false
@@ -152,6 +172,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 
 			return &response
+		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
 		}
 
 	default:
@@ -202,13 +237,17 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "../../graph/schema.graphqls", Input: `type EnergyResource {
-  id: String!
-  owner_id: String!
+  id: ID!
+  owner_name: String!
   capacity: Float!
 }
 
 type Query {
-  energy_resources(owner_id: String!): [EnergyResource!]!
+  energy_resources(owner_name: String!): [EnergyResource!]!
+}
+
+type Mutation {
+  registerEnergyResource(owner_name: String!, capacity: Float!): EnergyResource
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -216,6 +255,47 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_registerEnergyResource_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_registerEnergyResource_argsOwnerName(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["owner_name"] = arg0
+	arg1, err := ec.field_Mutation_registerEnergyResource_argsCapacity(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["capacity"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_registerEnergyResource_argsOwnerName(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("owner_name"))
+	if tmp, ok := rawArgs["owner_name"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_registerEnergyResource_argsCapacity(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (float64, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
+	if tmp, ok := rawArgs["capacity"]; ok {
+		return ec.unmarshalNFloat2float64(ctx, tmp)
+	}
+
+	var zeroVal float64
+	return zeroVal, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -243,19 +323,19 @@ func (ec *executionContext) field_Query___type_argsName(
 func (ec *executionContext) field_Query_energy_resources_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_energy_resources_argsOwnerID(ctx, rawArgs)
+	arg0, err := ec.field_Query_energy_resources_argsOwnerName(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["owner_id"] = arg0
+	args["owner_name"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Query_energy_resources_argsOwnerID(
+func (ec *executionContext) field_Query_energy_resources_argsOwnerName(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("owner_id"))
-	if tmp, ok := rawArgs["owner_id"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("owner_name"))
+	if tmp, ok := rawArgs["owner_name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -391,7 +471,7 @@ func (ec *executionContext) _EnergyResource_id(ctx context.Context, field graphq
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_EnergyResource_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -401,14 +481,14 @@ func (ec *executionContext) fieldContext_EnergyResource_id(_ context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _EnergyResource_owner_id(ctx context.Context, field graphql.CollectedField, obj *model.EnergyResource) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EnergyResource_owner_id(ctx, field)
+func (ec *executionContext) _EnergyResource_owner_name(ctx context.Context, field graphql.CollectedField, obj *model.EnergyResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EnergyResource_owner_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -421,7 +501,7 @@ func (ec *executionContext) _EnergyResource_owner_id(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OwnerID, nil
+		return obj.OwnerName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -438,7 +518,7 @@ func (ec *executionContext) _EnergyResource_owner_id(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EnergyResource_owner_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EnergyResource_owner_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EnergyResource",
 		Field:      field,
@@ -495,6 +575,66 @@ func (ec *executionContext) fieldContext_EnergyResource_capacity(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_registerEnergyResource(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_registerEnergyResource(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RegisterEnergyResource(rctx, fc.Args["owner_name"].(string), fc.Args["capacity"].(float64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.EnergyResource)
+	fc.Result = res
+	return ec.marshalOEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_registerEnergyResource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_EnergyResource_id(ctx, field)
+			case "owner_name":
+				return ec.fieldContext_EnergyResource_owner_name(ctx, field)
+			case "capacity":
+				return ec.fieldContext_EnergyResource_capacity(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EnergyResource", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_registerEnergyResource_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_energy_resources(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_energy_resources(ctx, field)
 	if err != nil {
@@ -509,7 +649,7 @@ func (ec *executionContext) _Query_energy_resources(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().EnergyResources(rctx, fc.Args["owner_id"].(string))
+		return ec.resolvers.Query().EnergyResources(rctx, fc.Args["owner_name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -536,8 +676,8 @@ func (ec *executionContext) fieldContext_Query_energy_resources(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_EnergyResource_id(ctx, field)
-			case "owner_id":
-				return ec.fieldContext_EnergyResource_owner_id(ctx, field)
+			case "owner_name":
+				return ec.fieldContext_EnergyResource_owner_name(ctx, field)
 			case "capacity":
 				return ec.fieldContext_EnergyResource_capacity(ctx, field)
 			}
@@ -2664,8 +2804,8 @@ func (ec *executionContext) _EnergyResource(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "owner_id":
-			out.Values[i] = ec._EnergyResource_owner_id(ctx, field, obj)
+		case "owner_name":
+			out.Values[i] = ec._EnergyResource_owner_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -2674,6 +2814,52 @@ func (ec *executionContext) _EnergyResource(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
+			Object: field.Name,
+			Field:  field,
+		})
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "registerEnergyResource":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_registerEnergyResource(ctx, field)
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3188,6 +3374,21 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
+func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {
+	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3480,6 +3681,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx context.Context, sel ast.SelectionSet, v *model.EnergyResource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EnergyResource(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

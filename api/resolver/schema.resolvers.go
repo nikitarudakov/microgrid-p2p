@@ -6,17 +6,23 @@ package resolver
 
 import (
 	"context"
-	"google.golang.org/protobuf/types/known/wrapperspb"
+	"fmt"
 
 	"github.com/nikitarudakov/microenergy/api/model"
 	"github.com/nikitarudakov/microenergy/api/runtime"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+// RegisterEnergyResource is the resolver for the registerEnergyResource field.
+func (r *mutationResolver) RegisterEnergyResource(ctx context.Context, ownerName string, capacity float64) (*model.EnergyResource, error) {
+	panic(fmt.Errorf("not implemented: RegisterEnergyResource - registerEnergyResource"))
+}
+
 // EnergyResources is the resolver for the energy_resources field.
-func (r *queryResolver) EnergyResources(ctx context.Context, ownerID string) ([]*model.EnergyResource, error) {
+func (r *queryResolver) EnergyResources(ctx context.Context, ownerName string) ([]*model.EnergyResource, error) {
 	response, err := r.inventoryManagementService.GetOwnerEnergyResourceList(
 		ctx,
-		&wrapperspb.StringValue{Value: ownerID},
+		&wrapperspb.StringValue{Value: ownerName},
 	)
 	if err != nil {
 		return nil, err
@@ -30,7 +36,11 @@ func (r *queryResolver) EnergyResources(ctx context.Context, ownerID string) ([]
 	return output, nil
 }
 
+// Mutation returns runtime.MutationResolver implementation.
+func (r *Resolver) Mutation() runtime.MutationResolver { return &mutationResolver{r} }
+
 // Query returns runtime.QueryResolver implementation.
 func (r *Resolver) Query() runtime.QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

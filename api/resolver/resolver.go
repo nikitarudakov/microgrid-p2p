@@ -1,7 +1,7 @@
 package resolver
 
 import (
-	inventoryService "github.com/nikitarudakov/microenergy/internal/gen/inventory/v1"
+	inventoryService "github.com/nikitarudakov/microenergy/internal/pb"
 	"github.com/sirupsen/logrus"
 )
 

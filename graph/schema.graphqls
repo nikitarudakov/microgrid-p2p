@@ -1,9 +1,13 @@
 type EnergyResource {
-  id: String!
-  owner_id: String!
+  id: ID!
+  owner_name: String!
   capacity: Float!
 }
 
 type Query {
-  energy_resources(owner_id: String!): [EnergyResource!]!
+  energy_resources(owner_name: String!): [EnergyResource!]!
+}
+
+type Mutation {
+  registerEnergyResource(owner_name: String!, capacity: Float!): EnergyResource
 }

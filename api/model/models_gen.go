@@ -3,9 +3,12 @@
 package model
 
 type EnergyResource struct {
-	ID       string  `json:"id"`
-	OwnerID  string  `json:"owner_id"`
-	Capacity float64 `json:"capacity"`
+	ID        string  `json:"id"`
+	OwnerName string  `json:"owner_name"`
+	Capacity  float64 `json:"capacity"`
+}
+
+type Mutation struct {
 }
 
 type Query struct {
