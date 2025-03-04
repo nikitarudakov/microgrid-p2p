@@ -20,6 +20,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	InventoryManagement_RegisterEnergyResource_FullMethodName     = "/pb.InventoryManagement/RegisterEnergyResource"
 	InventoryManagement_GetOwnerEnergyResourceList_FullMethodName = "/pb.InventoryManagement/GetOwnerEnergyResourceList"
 )
 
@@ -27,6 +28,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InventoryManagementClient interface {
+	RegisterEnergyResource(ctx context.Context, in *RegisterEnergyResourceInput, opts ...grpc.CallOption) (*EnergyResource, error)
 	GetOwnerEnergyResourceList(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*EnergyResourceList, error)
 }
 
@@ -36,6 +38,15 @@ type inventoryManagementClient struct {
 
 func NewInventoryManagementClient(cc grpc.ClientConnInterface) InventoryManagementClient {
 	return &inventoryManagementClient{cc}
+}
+
+func (c *inventoryManagementClient) RegisterEnergyResource(ctx context.Context, in *RegisterEnergyResourceInput, opts ...grpc.CallOption) (*EnergyResource, error) {
+	out := new(EnergyResource)
+	err := c.cc.Invoke(ctx, InventoryManagement_RegisterEnergyResource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *inventoryManagementClient) GetOwnerEnergyResourceList(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*EnergyResourceList, error) {
@@ -51,6 +62,7 @@ func (c *inventoryManagementClient) GetOwnerEnergyResourceList(ctx context.Conte
 // All implementations must embed UnimplementedInventoryManagementServer
 // for forward compatibility
 type InventoryManagementServer interface {
+	RegisterEnergyResource(context.Context, *RegisterEnergyResourceInput) (*EnergyResource, error)
 	GetOwnerEnergyResourceList(context.Context, *wrapperspb.StringValue) (*EnergyResourceList, error)
 	mustEmbedUnimplementedInventoryManagementServer()
 }
@@ -59,6 +71,9 @@ type InventoryManagementServer interface {
 type UnimplementedInventoryManagementServer struct {
 }
 
+func (UnimplementedInventoryManagementServer) RegisterEnergyResource(context.Context, *RegisterEnergyResourceInput) (*EnergyResource, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterEnergyResource not implemented")
+}
 func (UnimplementedInventoryManagementServer) GetOwnerEnergyResourceList(context.Context, *wrapperspb.StringValue) (*EnergyResourceList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOwnerEnergyResourceList not implemented")
 }
@@ -73,6 +88,24 @@ type UnsafeInventoryManagementServer interface {
 
 func RegisterInventoryManagementServer(s grpc.ServiceRegistrar, srv InventoryManagementServer) {
 	s.RegisterService(&InventoryManagement_ServiceDesc, srv)
+}
+
+func _InventoryManagement_RegisterEnergyResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterEnergyResourceInput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryManagementServer).RegisterEnergyResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InventoryManagement_RegisterEnergyResource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryManagementServer).RegisterEnergyResource(ctx, req.(*RegisterEnergyResourceInput))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _InventoryManagement_GetOwnerEnergyResourceList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -100,6 +133,10 @@ var InventoryManagement_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "pb.InventoryManagement",
 	HandlerType: (*InventoryManagementServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RegisterEnergyResource",
+			Handler:    _InventoryManagement_RegisterEnergyResource_Handler,
+		},
 		{
 			MethodName: "GetOwnerEnergyResourceList",
 			Handler:    _InventoryManagement_GetOwnerEnergyResourceList_Handler,

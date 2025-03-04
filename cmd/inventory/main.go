@@ -36,7 +36,7 @@ func main() {
 	pb.RegisterInventoryManagementServer(grpcServer, &inventory.Server{})
 
 	// Serve the Servants, oh no
-	logger.Println("Starting Company Service")
+	logger.Println("Starting Inventory Service")
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Fatalln("unable to start gRPC server:", err.Error())
 	}

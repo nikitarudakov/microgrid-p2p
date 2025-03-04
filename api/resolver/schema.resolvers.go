@@ -6,7 +6,7 @@ package resolver
 
 import (
 	"context"
-	"fmt"
+	"github.com/nikitarudakov/microenergy/internal/pb"
 
 	"github.com/nikitarudakov/microenergy/api/model"
 	"github.com/nikitarudakov/microenergy/api/runtime"
@@ -15,7 +15,15 @@ import (
 
 // RegisterEnergyResource is the resolver for the registerEnergyResource field.
 func (r *mutationResolver) RegisterEnergyResource(ctx context.Context, ownerName string, capacity float64) (*model.EnergyResource, error) {
-	panic(fmt.Errorf("not implemented: RegisterEnergyResource - registerEnergyResource"))
+	er, err := r.inventoryManagementService.RegisterEnergyResource(ctx, &pb.RegisterEnergyResourceInput{
+		OwnerName: ownerName,
+		Capacity:  float32(capacity),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return fromProto(er, &model.EnergyResource{}), nil
 }
 
 // EnergyResources is the resolver for the energy_resources field.

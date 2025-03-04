@@ -8,7 +8,7 @@ import "google/protobuf/wrappers.proto";
 
 message EnergyResource {
   string id = 1;
-  string owner_id = 2;
+  string owner_name = 2;
   float capacity = 3;
 }
 
@@ -16,6 +16,12 @@ message EnergyResourceList {
   repeated EnergyResource energy_resources = 1;
 }
 
+message RegisterEnergyResourceInput {
+  string owner_name = 1;
+  float capacity = 2;
+}
+
 service InventoryManagement {
+  rpc RegisterEnergyResource(RegisterEnergyResourceInput) returns (EnergyResource);
   rpc GetOwnerEnergyResourceList(google.protobuf.StringValue) returns (EnergyResourceList);
 }
