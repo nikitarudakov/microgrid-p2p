@@ -1,20 +1,9 @@
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
+type EnergyResource {
+  id: String!
+  owner_id: String!
+  capacity: Float!
 }
 
-type User {
-  id: ID!
-  name: String!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
-}
-
-type Mutation {
-  createTodo(input: NewTodo!): Todo!
+type Query {
+  energy_resources(owner_id: String!): [EnergyResource!]!
 }

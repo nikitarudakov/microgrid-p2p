@@ -1,6 +1,11 @@
 package main
 
 import (
+	"fmt"
+	inventoryService "github.com/nikitarudakov/microenergy/internal/gen/inventory/v1"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net/http"
 	"os"
@@ -18,13 +23,33 @@ import (
 const defaultPort = "8080"
 
 func main() {
+	// Set up logger
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
+	grpcCli, err := grpc.NewClient(
+		fmt.Sprintf(":%s", "5000"),
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	srv := handler.New(runtime.NewExecutableSchema(runtime.Config{
-		Resolvers: &resolver.Resolver{},
+		Resolvers: resolver.NewResolver(
+			inventoryService.NewInventoryManagementClient(grpcCli),
+			logger,
+		),
 	}))
 
 	srv.AddTransport(transport.Options{})

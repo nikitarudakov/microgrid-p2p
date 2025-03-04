@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package inventory.v1;
+
+option go_package = "inventory/v1";
+
+import "google/protobuf/wrappers.proto";
+
+message EnergyResource {
+  string id = 1;
+  string owner_id = 2;
+  float capacity = 3;
+}
+
+message EnergyResourceList {
+  repeated EnergyResource energy_resources = 1;
+}
+
+service InventoryManagement {
+  rpc GetOwnerEnergyResourceList(google.protobuf.StringValue) returns (EnergyResourceList);
+}

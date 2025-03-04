@@ -6,18 +6,31 @@ package resolver
 
 import (
 	"context"
-	"fmt"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/nikitarudakov/microenergy/api/model"
 	"github.com/nikitarudakov/microenergy/api/runtime"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// EnergyResources is the resolver for the energy_resources field.
+func (r *queryResolver) EnergyResources(ctx context.Context, ownerID string) ([]*model.EnergyResource, error) {
+	response, err := r.inventoryManagementService.GetOwnerEnergyResourceList(
+		ctx,
+		&wrapperspb.StringValue{Value: ownerID},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var output []*model.EnergyResource
+	for _, er := range response.EnergyResources {
+		output = append(output, fromProto(er, &model.EnergyResource{}))
+	}
+
+	return output, nil
 }
 
-// Mutation returns runtime.MutationResolver implementation.
-func (r *Resolver) Mutation() runtime.MutationResolver { return &mutationResolver{r} }
+// Query returns runtime.QueryResolver implementation.
+func (r *Resolver) Query() runtime.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
