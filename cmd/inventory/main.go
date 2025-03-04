@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	v1 "github.com/nikitarudakov/microenergy/internal/gen/inventory/v1"
+	"github.com/nikitarudakov/microenergy/internal/pb"
 	"github.com/nikitarudakov/microenergy/internal/services/inventory"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -33,7 +33,7 @@ func main() {
 	grpcServer := grpc.NewServer(opts...)
 
 	// Register the gRPC Server
-	v1.RegisterInventoryManagementServer(grpcServer, &inventory.Server{})
+	pb.RegisterInventoryManagementServer(grpcServer, &inventory.Server{})
 
 	// Serve the Servants, oh no
 	logger.Println("Starting Company Service")

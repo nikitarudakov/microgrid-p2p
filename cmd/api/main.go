@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	inventoryService "github.com/nikitarudakov/microenergy/internal/gen/inventory/v1"
+	"github.com/nikitarudakov/microenergy/internal/pb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -47,7 +47,7 @@ func main() {
 
 	srv := handler.New(runtime.NewExecutableSchema(runtime.Config{
 		Resolvers: resolver.NewResolver(
-			inventoryService.NewInventoryManagementClient(grpcCli),
+			pb.NewInventoryManagementClient(grpcCli),
 			logger,
 		),
 	}))

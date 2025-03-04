@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: inventory/v1/inventory.proto
+// source: inventory.proto
 
-package v1
+package pb
 
 import (
 	context "context"
@@ -20,7 +20,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	InventoryManagement_GetOwnerEnergyResourceList_FullMethodName = "/inventory.v1.InventoryManagement/GetOwnerEnergyResourceList"
+	InventoryManagement_GetOwnerEnergyResourceList_FullMethodName = "/pb.InventoryManagement/GetOwnerEnergyResourceList"
 )
 
 // InventoryManagementClient is the client API for InventoryManagement service.
@@ -97,7 +97,7 @@ func _InventoryManagement_GetOwnerEnergyResourceList_Handler(srv interface{}, ct
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var InventoryManagement_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "inventory.v1.InventoryManagement",
+	ServiceName: "pb.InventoryManagement",
 	HandlerType: (*InventoryManagementServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -106,5 +106,5 @@ var InventoryManagement_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "inventory/v1/inventory.proto",
+	Metadata: "inventory.proto",
 }
