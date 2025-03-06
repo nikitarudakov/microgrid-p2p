@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { api } from "@/application/api.ts";
 import defaultPhoto from "@/assets/profile.png";
 
 const props = defineProps<{
-  sellerUsername: string,
+  resourceName: string,
+  producerName: string,
   photoUrl?: string,
-  availableEnergyCapacity: number,
-  kWhPrice: number,
+  capacity: number,
+  price: number,
 }>()
-
 
 const withDefaultPhotoURL = computed(() => {
   return props.photoUrl || defaultPhoto
@@ -19,42 +18,25 @@ const withDefaultPhotoURL = computed(() => {
 const selectedEnergyCapacity = ref(0);
 
 const calculateTotalPrice = (): number => {
-  const totalPrice = Number(selectedEnergyCapacity.value) * props.kWhPrice
+  const totalPrice = Number(selectedEnergyCapacity.value) * 1.1
   return Math.round((totalPrice + Number.EPSILON) * 100) / 100
 }
 
 async function submitPurchaseRequest() {
-    try {
-      const response = await api.post( "/", {
-        seller: props.sellerUsername,
-        capacity: Number(selectedEnergyCapacity.value),
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (response.status != 200) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      console.log("Response:", response.data);
-    } catch (error) {
-      console.error("Error sending request:", error);
-    }
+    console.log("request was sent!")
 }
 </script>
 
 <template>
 <div class="fixed inset-0 flex items-center justify-center bg-gray-900/70">
   <div class="flex flex-col min-h-fit bg-gradient-to-b from-green-100 to-green-100 text-black rounded-2xl px-15 py-10">
-    <h1 class="text-2xl font-bold">Eco Energy Trading</h1>
+    <h1 class="text-2xl font-bold">{{ resourceName }}</h1>
 
     <div class="mt-5 mb-10">
       <p class="text-base mb-4">Purchase sustainable energy from local <br> green producers: </p>
       <div class="flex items-center">
         <img class="max-w-10 max-h-auto" :src="withDefaultPhotoURL" alt="photo"/>
-        <p class="font-bold ml-2">{{ sellerUsername }}</p>
+        <p class="font-bold ml-2">{{ producerName }}</p>
       </div>
     </div>
 
@@ -66,7 +48,7 @@ async function submitPurchaseRequest() {
           type="range"
           v-model="selectedEnergyCapacity"
           id="energy" name="energy"
-          min="1" :max="availableEnergyCapacity"
+          min="1" :max="capacity"
           class="flex-grow"
         />
         <p class="text-xl leading-6 font-medium">{{ selectedEnergyCapacity }} <br> kWh</p>
