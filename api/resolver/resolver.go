@@ -1,7 +1,7 @@
 package resolver
 
 import (
-	inventoryService "github.com/nikitarudakov/microenergy/internal/pb"
+	"github.com/nikitarudakov/microenergy/internal/pb"
 	"github.com/sirupsen/logrus"
 )
 
@@ -10,16 +10,19 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	inventoryManagementService inventoryService.InventoryManagementClient
+	inventoryManagementService pb.InventoryManagementClient
+	userManagementService      pb.UserManagementClient
 	logger                     *logrus.Logger
 }
 
 func NewResolver(
-	inventory inventoryService.InventoryManagementClient,
+	inventory pb.InventoryManagementClient,
+	user pb.UserManagementClient,
 	logger *logrus.Logger,
 ) *Resolver {
 	return &Resolver{
 		inventoryManagementService: inventory,
+		userManagementService:      user,
 		logger:                     logger,
 	}
 }

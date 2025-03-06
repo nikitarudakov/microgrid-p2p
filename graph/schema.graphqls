@@ -1,13 +1,37 @@
 type EnergyResource {
   id: ID!
-  owner_name: String!
+  name: String!
+  producer: User!
   capacity: Float!
+  price: Float!
+}
+
+type User {
+  id: ID!
+  first_name: String!,
+  last_name: String!,
+  resources: [EnergyResource!]!
 }
 
 type Query {
-  energy_resources(owner_name: String!): [EnergyResource!]!
+  users: [User!]!
+  user(id: ID!): User
+  energyResources: [EnergyResource!]!
+}
+
+input RegisterEnergyResource {
+  name: String!
+  producer_id: String!
+  capacity: Float!
+  price: Float!
+}
+
+input RegisterUser {
+  first_name: String!
+  last_name: String!
 }
 
 type Mutation {
-  registerEnergyResource(owner_name: String!, capacity: Float!): EnergyResource
+  registerEnergyResource(in: RegisterEnergyResource): EnergyResource
+  registerUser(in: RegisterUser): User
 }

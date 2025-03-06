@@ -6,39 +6,101 @@ package resolver
 
 import (
 	"context"
-	"github.com/nikitarudakov/microenergy/internal/pb"
-
+	"fmt"
+	"github.com/google/uuid"
 	"github.com/nikitarudakov/microenergy/api/model"
 	"github.com/nikitarudakov/microenergy/api/runtime"
-	"google.golang.org/protobuf/types/known/wrapperspb"
+	"github.com/nikitarudakov/microenergy/internal/pb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // RegisterEnergyResource is the resolver for the registerEnergyResource field.
-func (r *mutationResolver) RegisterEnergyResource(ctx context.Context, ownerName string, capacity float64) (*model.EnergyResource, error) {
-	er, err := r.inventoryManagementService.RegisterEnergyResource(ctx, &pb.RegisterEnergyResourceInput{
-		OwnerName: ownerName,
-		Capacity:  float32(capacity),
+func (r *mutationResolver) RegisterEnergyResource(ctx context.Context, in *model.RegisterEnergyResource) (*model.EnergyResource, error) {
+	input := toProto(in, &pb.RegisterEnergyResourceInput{})
+	input.Id = uuid.New().String()
+
+	user, err := r.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
+		Id: ptr(in.ProducerID),
 	})
+	if err != nil {
+		return nil, fmt.Errorf("user with provided id %q MUST exist", in.ProducerID)
+	}
+
+	response, err := r.inventoryManagementService.RegisterEnergyResource(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	return fromProto(er, &model.EnergyResource{}), nil
+	energyResource := fromProto(response, &model.EnergyResource{})
+
+	energyResource.Producer = fromProto(user, &model.User{})
+
+	return energyResource, nil
+}
+
+// RegisterUser is the resolver for the registerUser field.
+func (r *mutationResolver) RegisterUser(ctx context.Context, in *model.RegisterUser) (*model.User, error) {
+	input := toProto(in, &pb.RegisterUserInput{})
+	input.Id = uuid.New().String()
+
+	user, err := r.userManagementService.RegisterUser(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return fromProto(user, &model.User{}), nil
+}
+
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	response, err := r.userManagementService.FetchAllUsers(ctx, &emptypb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	var output []*model.User
+	for _, user := range response.Users {
+		output = append(output, fromProto(user, &model.User{}))
+	}
+
+	return output, nil
+}
+
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
+	user, err := r.userManagementService.FetchUser(ctx, &pb.FetchUserInput{Id: &id})
+	if err != nil {
+		return nil, err
+	}
+
+	return fromProto(user, &model.User{}), nil
 }
 
 // EnergyResources is the resolver for the energy_resources field.
-func (r *queryResolver) EnergyResources(ctx context.Context, ownerName string) ([]*model.EnergyResource, error) {
-	response, err := r.inventoryManagementService.GetOwnerEnergyResourceList(
-		ctx,
-		&wrapperspb.StringValue{Value: ownerName},
-	)
+func (r *queryResolver) EnergyResources(ctx context.Context) ([]*model.EnergyResource, error) {
+	response, err := r.inventoryManagementService.FetchAllEnergyResources(ctx, &emptypb.Empty{})
 	if err != nil {
 		return nil, err
 	}
 
 	var output []*model.EnergyResource
 	for _, er := range response.EnergyResources {
-		output = append(output, fromProto(er, &model.EnergyResource{}))
+		// Convert from energy resource proto
+		energyResource := fromProto(er, &model.EnergyResource{})
+
+		// Fetch energy producer
+		producer, err := r.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
+			Id: ptr(er.ProducerId),
+		})
+		if err != nil {
+			r.logger.Errorf("error fetching producer for energy resource %q: %s", er.Id, err)
+			continue
+		}
+
+		// Convert to producer model
+		energyResource.Producer = fromProto(producer, &model.User{})
+
+		output = append(output, energyResource)
 	}
 
 	return output, nil

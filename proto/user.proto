@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./;pb";
+
+import "google/protobuf/empty.proto";
+
+message User {
+  string id = 1;
+  string first_name = 2;
+  string last_name = 3;
+}
+
+message UserList {
+  repeated User users = 1;
+}
+
+message FetchUserInput {
+  optional string id = 1;
+}
+
+message RegisterUserInput {
+  string id = 1;
+  string first_name = 2;
+  string last_name = 3;
+}
+
+service UserManagement {
+  rpc FetchAllUsers(google.protobuf.Empty) returns (UserList);
+  rpc FetchUser(FetchUserInput) returns (User);
+  rpc RegisterUser(RegisterUserInput) returns (User);
+}

@@ -5,11 +5,14 @@ package pb;
 option go_package = "./;pb";
 
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
 
 message EnergyResource {
   string id = 1;
-  string owner_name = 2;
-  float capacity = 3;
+  string name = 2;
+  string producer_id = 3;
+  float capacity = 4;
+  float price = 5;
 }
 
 message EnergyResourceList {
@@ -17,11 +20,15 @@ message EnergyResourceList {
 }
 
 message RegisterEnergyResourceInput {
-  string owner_name = 1;
-  float capacity = 2;
+  string id = 1;
+  string name = 2;
+  string producer_id = 3;
+  float capacity = 4;
+  float price = 5;
 }
 
 service InventoryManagement {
   rpc RegisterEnergyResource(RegisterEnergyResourceInput) returns (EnergyResource);
-  rpc GetOwnerEnergyResourceList(google.protobuf.StringValue) returns (EnergyResourceList);
+  rpc FetchAllEnergyResources(google.protobuf.Empty) returns (EnergyResourceList);
+  rpc FetchProducerEnergyResources(google.protobuf.StringValue) returns (EnergyResourceList);
 }

@@ -36,8 +36,18 @@ func main() {
 		port = defaultPort
 	}
 
-	grpcCli, err := grpc.NewClient(
+	inventoryGrpcCli, err := grpc.NewClient(
 		fmt.Sprintf(":%s", "5000"),
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	userGrpcCli, err := grpc.NewClient(
+		fmt.Sprintf(":%s", "5001"),
 		grpc.WithTransportCredentials(
 			insecure.NewCredentials(),
 		),
@@ -48,7 +58,8 @@ func main() {
 
 	srv := handler.New(runtime.NewExecutableSchema(runtime.Config{
 		Resolvers: resolver.NewResolver(
-			pb.NewInventoryManagementClient(grpcCli),
+			pb.NewInventoryManagementClient(inventoryGrpcCli),
+			pb.NewUserManagementClient(userGrpcCli),
 			logger,
 		),
 	}))

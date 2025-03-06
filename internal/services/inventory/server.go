@@ -2,8 +2,8 @@ package inventory
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"github.com/nikitarudakov/microenergy/internal/pb"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"sync"
 )
@@ -14,10 +14,14 @@ type Server struct {
 	pb.InventoryManagementServer
 }
 
-func (s *Server) GetOwnerEnergyResourceList(_ context.Context, ownerName *wrapperspb.StringValue) (*pb.EnergyResourceList, error) {
+func (s *Server) FetchAllEnergyResources(_ context.Context, _ *emptypb.Empty) (*pb.EnergyResourceList, error) {
+	return &pb.EnergyResourceList{EnergyResources: s.energyResources}, nil
+}
+
+func (s *Server) FetchProducerEnergyResources(_ context.Context, producerId *wrapperspb.StringValue) (*pb.EnergyResourceList, error) {
 	var ownersEnergyResources []*pb.EnergyResource
 	for _, er := range s.energyResources {
-		if er.OwnerName == ownerName.Value {
+		if er.ProducerId == producerId.Value {
 			ownersEnergyResources = append(ownersEnergyResources, er)
 		}
 	}
@@ -30,9 +34,11 @@ func (s *Server) RegisterEnergyResource(_ context.Context, in *pb.RegisterEnergy
 	defer s.mu.Unlock()
 
 	energyResource := &pb.EnergyResource{
-		Id:        uuid.New().String(),
-		OwnerName: in.OwnerName,
-		Capacity:  in.Capacity,
+		Id:         in.Id,
+		Name:       in.Name,
+		ProducerId: in.ProducerId,
+		Capacity:   in.Capacity,
+		Price:      in.Price,
 	}
 
 	s.energyResources = append(s.energyResources, energyResource)

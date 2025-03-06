@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -20,8 +21,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	InventoryManagement_RegisterEnergyResource_FullMethodName     = "/pb.InventoryManagement/RegisterEnergyResource"
-	InventoryManagement_GetOwnerEnergyResourceList_FullMethodName = "/pb.InventoryManagement/GetOwnerEnergyResourceList"
+	InventoryManagement_RegisterEnergyResource_FullMethodName       = "/pb.InventoryManagement/RegisterEnergyResource"
+	InventoryManagement_FetchAllEnergyResources_FullMethodName      = "/pb.InventoryManagement/FetchAllEnergyResources"
+	InventoryManagement_FetchProducerEnergyResources_FullMethodName = "/pb.InventoryManagement/FetchProducerEnergyResources"
 )
 
 // InventoryManagementClient is the client API for InventoryManagement service.
@@ -29,7 +31,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InventoryManagementClient interface {
 	RegisterEnergyResource(ctx context.Context, in *RegisterEnergyResourceInput, opts ...grpc.CallOption) (*EnergyResource, error)
-	GetOwnerEnergyResourceList(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*EnergyResourceList, error)
+	FetchAllEnergyResources(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EnergyResourceList, error)
+	FetchProducerEnergyResources(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*EnergyResourceList, error)
 }
 
 type inventoryManagementClient struct {
@@ -49,9 +52,18 @@ func (c *inventoryManagementClient) RegisterEnergyResource(ctx context.Context, 
 	return out, nil
 }
 
-func (c *inventoryManagementClient) GetOwnerEnergyResourceList(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*EnergyResourceList, error) {
+func (c *inventoryManagementClient) FetchAllEnergyResources(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EnergyResourceList, error) {
 	out := new(EnergyResourceList)
-	err := c.cc.Invoke(ctx, InventoryManagement_GetOwnerEnergyResourceList_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, InventoryManagement_FetchAllEnergyResources_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inventoryManagementClient) FetchProducerEnergyResources(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*EnergyResourceList, error) {
+	out := new(EnergyResourceList)
+	err := c.cc.Invoke(ctx, InventoryManagement_FetchProducerEnergyResources_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +75,8 @@ func (c *inventoryManagementClient) GetOwnerEnergyResourceList(ctx context.Conte
 // for forward compatibility
 type InventoryManagementServer interface {
 	RegisterEnergyResource(context.Context, *RegisterEnergyResourceInput) (*EnergyResource, error)
-	GetOwnerEnergyResourceList(context.Context, *wrapperspb.StringValue) (*EnergyResourceList, error)
+	FetchAllEnergyResources(context.Context, *emptypb.Empty) (*EnergyResourceList, error)
+	FetchProducerEnergyResources(context.Context, *wrapperspb.StringValue) (*EnergyResourceList, error)
 	mustEmbedUnimplementedInventoryManagementServer()
 }
 
@@ -74,8 +87,11 @@ type UnimplementedInventoryManagementServer struct {
 func (UnimplementedInventoryManagementServer) RegisterEnergyResource(context.Context, *RegisterEnergyResourceInput) (*EnergyResource, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterEnergyResource not implemented")
 }
-func (UnimplementedInventoryManagementServer) GetOwnerEnergyResourceList(context.Context, *wrapperspb.StringValue) (*EnergyResourceList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOwnerEnergyResourceList not implemented")
+func (UnimplementedInventoryManagementServer) FetchAllEnergyResources(context.Context, *emptypb.Empty) (*EnergyResourceList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FetchAllEnergyResources not implemented")
+}
+func (UnimplementedInventoryManagementServer) FetchProducerEnergyResources(context.Context, *wrapperspb.StringValue) (*EnergyResourceList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FetchProducerEnergyResources not implemented")
 }
 func (UnimplementedInventoryManagementServer) mustEmbedUnimplementedInventoryManagementServer() {}
 
@@ -108,20 +124,38 @@ func _InventoryManagement_RegisterEnergyResource_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InventoryManagement_GetOwnerEnergyResourceList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _InventoryManagement_FetchAllEnergyResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryManagementServer).FetchAllEnergyResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InventoryManagement_FetchAllEnergyResources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryManagementServer).FetchAllEnergyResources(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InventoryManagement_FetchProducerEnergyResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InventoryManagementServer).GetOwnerEnergyResourceList(ctx, in)
+		return srv.(InventoryManagementServer).FetchProducerEnergyResources(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: InventoryManagement_GetOwnerEnergyResourceList_FullMethodName,
+		FullMethod: InventoryManagement_FetchProducerEnergyResources_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InventoryManagementServer).GetOwnerEnergyResourceList(ctx, req.(*wrapperspb.StringValue))
+		return srv.(InventoryManagementServer).FetchProducerEnergyResources(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -138,8 +172,12 @@ var InventoryManagement_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _InventoryManagement_RegisterEnergyResource_Handler,
 		},
 		{
-			MethodName: "GetOwnerEnergyResourceList",
-			Handler:    _InventoryManagement_GetOwnerEnergyResourceList_Handler,
+			MethodName: "FetchAllEnergyResources",
+			Handler:    _InventoryManagement_FetchAllEnergyResources_Handler,
+		},
+		{
+			MethodName: "FetchProducerEnergyResources",
+			Handler:    _InventoryManagement_FetchProducerEnergyResources_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

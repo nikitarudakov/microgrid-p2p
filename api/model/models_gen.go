@@ -3,13 +3,34 @@
 package model
 
 type EnergyResource struct {
-	ID        string  `json:"id"`
-	OwnerName string  `json:"owner_name"`
-	Capacity  float64 `json:"capacity"`
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
+	Producer *User   `json:"producer"`
+	Capacity float64 `json:"capacity"`
+	Price    float64 `json:"price"`
 }
 
 type Mutation struct {
 }
 
 type Query struct {
+}
+
+type RegisterEnergyResource struct {
+	Name       string  `json:"name"`
+	ProducerID string  `json:"producer_id"`
+	Capacity   float64 `json:"capacity"`
+	Price      float64 `json:"price"`
+}
+
+type RegisterUser struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+}
+
+type User struct {
+	ID        string            `json:"id"`
+	FirstName string            `json:"first_name"`
+	LastName  string            `json:"last_name"`
+	Resources []*EnergyResource `json:"resources,omitempty"`
 }
