@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import EnergyItem from "@/components/EnergyItem.vue";
+import {provide} from 'vue'
+import MainPage from "@/components/MainPage.vue";
+import { apolloClient } from '@/application/apollo.ts'
+import { DefaultApolloClient } from "@vue/apollo-composable"
+provide(DefaultApolloClient, apolloClient)
 </script>
 
 <template>
-  <EnergyItem :k-wh-price=0.52 sellerUsername="Nikita Rudakov" :available-energy-capacity=200 />
+  <MainPage/>
 </template>
 
 <style scoped>
