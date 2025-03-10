@@ -36,7 +36,7 @@ const energyTypeIcon = computed(() => {
       </li>
       <li class="flex">
         <img :src=EnergyGrayIcon alt="energy_icon">
-        <p>{{ `${energyResource.capacity.toFixed(0) } kWh Available` }} </p>
+        <p>{{ `${ energyResource.capacity.toFixed(0) } kWh Available` }} </p>
       </li>
     </ul>
 

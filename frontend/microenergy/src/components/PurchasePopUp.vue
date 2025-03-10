@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import defaultPhoto from "@/assets/profile.png";
+import { ref } from "vue";
 import type { User } from '@/interfaces/interfaces.ts'
 import UserElement from '@/components/UserElement.vue'
 
@@ -49,7 +48,7 @@ async function submitPurchaseRequest() {
           type="range"
           v-model="selectedEnergyCapacity"
           id="energy" name="energy"
-          min="1" :max="capacity"
+          min="1" :max="capacity" step="0.01"
           class="flex-grow"
         />
         <p class="text-xl leading-6 font-medium">{{ selectedEnergyCapacity }} <br> kWh</p>
