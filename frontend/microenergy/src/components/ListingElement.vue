@@ -11,10 +11,6 @@ const props = defineProps<{
   energyResource: EnergyResource
 }>()
 
-const username = ref(
-  `${props.energyResource.producer.firstName} ${props.energyResource.producer.lastName}`
-)
-
 // Used for showing pop-up
 const showPurchasePopUp = ref(false)
 
@@ -30,7 +26,7 @@ const energyTypeIcon = computed(() => {
 
 
 <template>
-  <div class="px-10 py-8 drop-shadow-xl bg-white rounded-xl">
+  <div class="flex flex-wrap gap-3 px-10 py-8 drop-shadow-xl bg-white rounded-xl">
     <UserElement :user=energyResource.producer />
 
     <ul class="mt-3">
@@ -46,16 +42,17 @@ const energyTypeIcon = computed(() => {
 
     <p class="mt-3 font-bold text-emerald-600 text-[1.3rem]">{{ `\$${energyResource.price}/kWh` }}</p>
 
-    <button @click="showPurchasePopUp = !showPurchasePopUp" class="purchase-btn w-[175px] mt-3 rounded-2xl">
+    <button @click="showPurchasePopUp = true" class="w-full purchase-btn mt-3 rounded-2xl">
       <img src="../assets/energy-icon.svg" alt="energy icon">
       <span>Purchase Now</span>
     </button>
   </div>
 
-  <div v-if="showPurchasePopUp" class="w-full h-full t-0 absolute flex justify-center items-center">
+  <div v-if="showPurchasePopUp" class="fixed w-full h-full top-0 left-0 z-99">
     <PurchasePopUp
+      @close = "showPurchasePopUp = false"
       :price=energyResource.price
-      :producer-name=username
+      :producer=energyResource.producer
       :resource-name=energyResource.name
       :capacity=energyResource.capacity
     />
@@ -70,9 +67,8 @@ li {
 
   img {
     max-width: 20px;
-    width: 100%;
+    width: 20px;
     max-height: 16px;
-    object-fit: contain;
   }
 }
 </style>

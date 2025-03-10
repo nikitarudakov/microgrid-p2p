@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import defaultPhoto from "@/assets/profile.png";
+import type { User } from '@/interfaces/interfaces.ts'
+import UserElement from '@/components/UserElement.vue'
 
-const props = defineProps<{
+// Events this component will emit
+defineEmits(['close'])
+
+defineProps<{
   resourceName: string,
-  producerName: string,
-  photoUrl?: string,
+  producer: User,
   capacity: number,
   price: number,
 }>()
-
-const withDefaultPhotoURL = computed(() => {
-  return props.photoUrl || defaultPhoto
-})
 
 // Updated when user uses range input to select desired energy capacity for purchase
 const selectedEnergyCapacity = ref(0);
@@ -28,16 +28,17 @@ async function submitPurchaseRequest() {
 </script>
 
 <template>
-<div class="fixed inset-0 flex items-center justify-center bg-gray-900/70">
-  <div class="flex flex-col min-h-fit bg-gradient-to-b from-green-100 to-green-100 text-black rounded-2xl px-15 py-10">
-    <h1 class="text-2xl font-bold">{{ resourceName }}</h1>
+ <div class="h-full inset-0 flex items-center justify-center bg-gray-900/40">
+  <div class="bg-gradient-to-b from-white to-emerald-50 rounded-2xl px-15 py-10 border-2 border-white">
+
+    <div class="flex justify-between">
+      <h1 class="text-2xl font-bold">{{ resourceName }}</h1>
+      <img @click="$emit('close')" class="cursor-pointer" src="../assets/close.png" alt="close" />
+    </div>
 
     <div class="mt-5 mb-10">
       <p class="text-base mb-4">Purchase sustainable energy from local <br> green producers: </p>
-      <div class="flex items-center">
-        <img class="max-w-10 max-h-auto" :src="withDefaultPhotoURL" alt="photo"/>
-        <p class="font-bold ml-2">{{ producerName }}</p>
-      </div>
+      <UserElement :user=producer />
     </div>
 
     <label for="energy" class="flex flex-col my-auto">
@@ -62,7 +63,7 @@ async function submitPurchaseRequest() {
       </div>
       <p>Reduces CO₂ emissions by approximately 40kg</p>
     </div>
-    
+
     <div class="mt-10">
       <button class="flex w-full justify-center cursor-pointer  bg-emerald-600 text-white p-4 rounded-xl drop-shadow-xl" type="submit" @click="submitPurchaseRequest">
         <img class="mr-2" src="../assets/energy-icon.svg" alt="energy icon">
@@ -70,7 +71,7 @@ async function submitPurchaseRequest() {
       </button>
       <p class="text-center mt-3 text-gray-600">{{ 'Total Price: ' + '$' + calculateTotalPrice() + ' USD' }}</p>
     </div>
-    
+
   </div>
 </div>
 </template>
