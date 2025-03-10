@@ -31,7 +31,13 @@ input RegisterUser {
   last_name: String!
 }
 
+input PurchaseEnergy {
+  id: ID!
+  capacity: Float!
+}
+
 type Mutation {
   registerEnergyResource(in: RegisterEnergyResource): EnergyResource
   registerUser(in: RegisterUser): User
+  purchaseEnergy(in: PurchaseEnergy): EnergyResource
 }

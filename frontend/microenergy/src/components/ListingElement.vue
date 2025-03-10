@@ -51,6 +51,7 @@ const energyTypeIcon = computed(() => {
   <div v-if="showPurchasePopUp" class="fixed w-full h-full top-0 left-0 z-99">
     <PurchasePopUp
       @close = "showPurchasePopUp = false"
+      :id=energyResource.id
       :price=energyResource.price
       :producer=energyResource.producer
       :resource-name=energyResource.name

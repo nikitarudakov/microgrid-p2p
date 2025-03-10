@@ -2,11 +2,14 @@
 import { ref } from "vue";
 import type { User } from '@/interfaces/interfaces.ts'
 import UserElement from '@/components/UserElement.vue'
+import { useMutation  } from '@vue/apollo-composable'
+import { PURCHASE_REQUEST } from '@/application/queries.ts'
 
 // Events this component will emit
 defineEmits(['close'])
 
-defineProps<{
+const props = defineProps<{
+  id: string,
   resourceName: string,
   producer: User,
   capacity: number,
@@ -17,13 +20,17 @@ defineProps<{
 const selectedEnergyCapacity = ref(0);
 
 const calculateTotalPrice = (): number => {
-  const totalPrice = Number(selectedEnergyCapacity.value) * 1.1
+  const totalPrice = Number(selectedEnergyCapacity.value) * props.price
   return Math.round((totalPrice + Number.EPSILON) * 100) / 100
 }
 
-async function submitPurchaseRequest() {
-    console.log("request was sent!")
-}
+// Handling purchase request
+const { mutate: submitPurchaseRequest } = useMutation(PURCHASE_REQUEST, () => ({
+  variables: {
+    id: props.id,
+    capacity: selectedEnergyCapacity.value,
+  }
+}))
 </script>
 
 <template>
@@ -64,7 +71,7 @@ async function submitPurchaseRequest() {
     </div>
 
     <div class="mt-10">
-      <button class="flex w-full justify-center cursor-pointer  bg-emerald-600 text-white p-4 rounded-xl drop-shadow-xl" type="submit" @click="submitPurchaseRequest">
+      <button @click="submitPurchaseRequest" class="flex w-full justify-center cursor-pointer  bg-emerald-600 text-white p-4 rounded-xl drop-shadow-xl" type="submit">
         <img class="mr-2" src="../assets/energy-icon.svg" alt="energy icon">
         Purchase Energy
       </button>

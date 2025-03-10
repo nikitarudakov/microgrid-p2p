@@ -10,6 +10,7 @@ const { result, loading, error } = useQuery(ENERGY_RESOURCES)
 const listing: ComputedRef<EnergyResource[]> = computed(() => {
   if (!result.value) return []
   return result.value.energyResources.map(resource => ({
+    id: resource.id as string,
     name: resource.name as string,
     producer: {
       firstName: resource.producer.first_name,

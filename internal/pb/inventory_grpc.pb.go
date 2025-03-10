@@ -21,9 +21,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	InventoryManagement_RegisterEnergyResource_FullMethodName       = "/pb.InventoryManagement/RegisterEnergyResource"
-	InventoryManagement_FetchAllEnergyResources_FullMethodName      = "/pb.InventoryManagement/FetchAllEnergyResources"
-	InventoryManagement_FetchProducerEnergyResources_FullMethodName = "/pb.InventoryManagement/FetchProducerEnergyResources"
+	InventoryManagement_RegisterEnergyResource_FullMethodName         = "/pb.InventoryManagement/RegisterEnergyResource"
+	InventoryManagement_SubtractEnergyResourceCapacity_FullMethodName = "/pb.InventoryManagement/SubtractEnergyResourceCapacity"
+	InventoryManagement_FetchAllEnergyResources_FullMethodName        = "/pb.InventoryManagement/FetchAllEnergyResources"
+	InventoryManagement_FetchProducerEnergyResources_FullMethodName   = "/pb.InventoryManagement/FetchProducerEnergyResources"
 )
 
 // InventoryManagementClient is the client API for InventoryManagement service.
@@ -31,6 +32,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InventoryManagementClient interface {
 	RegisterEnergyResource(ctx context.Context, in *RegisterEnergyResourceInput, opts ...grpc.CallOption) (*EnergyResource, error)
+	SubtractEnergyResourceCapacity(ctx context.Context, in *SubtractEnergyResourceCapacityInput, opts ...grpc.CallOption) (*EnergyResource, error)
 	FetchAllEnergyResources(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EnergyResourceList, error)
 	FetchProducerEnergyResources(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*EnergyResourceList, error)
 }
@@ -46,6 +48,15 @@ func NewInventoryManagementClient(cc grpc.ClientConnInterface) InventoryManageme
 func (c *inventoryManagementClient) RegisterEnergyResource(ctx context.Context, in *RegisterEnergyResourceInput, opts ...grpc.CallOption) (*EnergyResource, error) {
 	out := new(EnergyResource)
 	err := c.cc.Invoke(ctx, InventoryManagement_RegisterEnergyResource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inventoryManagementClient) SubtractEnergyResourceCapacity(ctx context.Context, in *SubtractEnergyResourceCapacityInput, opts ...grpc.CallOption) (*EnergyResource, error) {
+	out := new(EnergyResource)
+	err := c.cc.Invoke(ctx, InventoryManagement_SubtractEnergyResourceCapacity_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +86,7 @@ func (c *inventoryManagementClient) FetchProducerEnergyResources(ctx context.Con
 // for forward compatibility
 type InventoryManagementServer interface {
 	RegisterEnergyResource(context.Context, *RegisterEnergyResourceInput) (*EnergyResource, error)
+	SubtractEnergyResourceCapacity(context.Context, *SubtractEnergyResourceCapacityInput) (*EnergyResource, error)
 	FetchAllEnergyResources(context.Context, *emptypb.Empty) (*EnergyResourceList, error)
 	FetchProducerEnergyResources(context.Context, *wrapperspb.StringValue) (*EnergyResourceList, error)
 	mustEmbedUnimplementedInventoryManagementServer()
@@ -86,6 +98,9 @@ type UnimplementedInventoryManagementServer struct {
 
 func (UnimplementedInventoryManagementServer) RegisterEnergyResource(context.Context, *RegisterEnergyResourceInput) (*EnergyResource, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterEnergyResource not implemented")
+}
+func (UnimplementedInventoryManagementServer) SubtractEnergyResourceCapacity(context.Context, *SubtractEnergyResourceCapacityInput) (*EnergyResource, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubtractEnergyResourceCapacity not implemented")
 }
 func (UnimplementedInventoryManagementServer) FetchAllEnergyResources(context.Context, *emptypb.Empty) (*EnergyResourceList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FetchAllEnergyResources not implemented")
@@ -120,6 +135,24 @@ func _InventoryManagement_RegisterEnergyResource_Handler(srv interface{}, ctx co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(InventoryManagementServer).RegisterEnergyResource(ctx, req.(*RegisterEnergyResourceInput))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InventoryManagement_SubtractEnergyResourceCapacity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubtractEnergyResourceCapacityInput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryManagementServer).SubtractEnergyResourceCapacity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InventoryManagement_SubtractEnergyResourceCapacity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryManagementServer).SubtractEnergyResourceCapacity(ctx, req.(*SubtractEnergyResourceCapacityInput))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -170,6 +203,10 @@ var InventoryManagement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterEnergyResource",
 			Handler:    _InventoryManagement_RegisterEnergyResource_Handler,
+		},
+		{
+			MethodName: "SubtractEnergyResourceCapacity",
+			Handler:    _InventoryManagement_SubtractEnergyResourceCapacity_Handler,
 		},
 		{
 			MethodName: "FetchAllEnergyResources",

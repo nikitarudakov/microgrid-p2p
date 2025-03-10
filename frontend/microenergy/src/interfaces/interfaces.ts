@@ -4,6 +4,7 @@ export interface User {
 }
 
 export interface EnergyResource {
+  id: string,
   name: string,
   producer: User,
   capacity: number,

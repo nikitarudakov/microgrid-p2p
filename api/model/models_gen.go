@@ -13,6 +13,11 @@ type EnergyResource struct {
 type Mutation struct {
 }
 
+type PurchaseEnergy struct {
+	ID       string  `json:"id"`
+	Capacity float64 `json:"capacity"`
+}
+
 type Query struct {
 }
 
@@ -32,5 +37,5 @@ type User struct {
 	ID        string            `json:"id"`
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
-	Resources []*EnergyResource `json:"resources,omitempty"`
+	Resources []*EnergyResource `json:"resources"`
 }

@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		PurchaseEnergy         func(childComplexity int, in *model.PurchaseEnergy) int
 		RegisterEnergyResource func(childComplexity int, in *model.RegisterEnergyResource) int
 		RegisterUser           func(childComplexity int, in *model.RegisterUser) int
 	}
@@ -76,6 +77,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	RegisterEnergyResource(ctx context.Context, in *model.RegisterEnergyResource) (*model.EnergyResource, error)
 	RegisterUser(ctx context.Context, in *model.RegisterUser) (*model.User, error)
+	PurchaseEnergy(ctx context.Context, in *model.PurchaseEnergy) (*model.EnergyResource, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
@@ -136,6 +138,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EnergyResource.Producer(childComplexity), true
+
+	case "Mutation.purchaseEnergy":
+		if e.complexity.Mutation.PurchaseEnergy == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_purchaseEnergy_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PurchaseEnergy(childComplexity, args["in"].(*model.PurchaseEnergy)), true
 
 	case "Mutation.registerEnergyResource":
 		if e.complexity.Mutation.RegisterEnergyResource == nil {
@@ -223,6 +237,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputPurchaseEnergy,
 		ec.unmarshalInputRegisterEnergyResource,
 		ec.unmarshalInputRegisterUser,
 	)
@@ -334,13 +349,13 @@ type User {
   id: ID!
   first_name: String!,
   last_name: String!,
-  resources: [EnergyResource!]
+  resources: [EnergyResource!]!
 }
 
 type Query {
-  users: [User!]
+  users: [User!]!
   user(id: ID!): User
-  energyResources: [EnergyResource]!
+  energyResources: [EnergyResource!]!
 }
 
 input RegisterEnergyResource {
@@ -355,9 +370,15 @@ input RegisterUser {
   last_name: String!
 }
 
+input PurchaseEnergy {
+  id: ID!
+  capacity: Float!
+}
+
 type Mutation {
   registerEnergyResource(in: RegisterEnergyResource): EnergyResource
   registerUser(in: RegisterUser): User
+  purchaseEnergy(in: PurchaseEnergy): EnergyResource
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -365,6 +386,29 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_purchaseEnergy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_purchaseEnergy_argsIn(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["in"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_purchaseEnergy_argsIn(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.PurchaseEnergy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("in"))
+	if tmp, ok := rawArgs["in"]; ok {
+		return ec.unmarshalOPurchaseEnergy2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐPurchaseEnergy(ctx, tmp)
+	}
+
+	var zeroVal *model.PurchaseEnergy
+	return zeroVal, nil
+}
 
 func (ec *executionContext) field_Mutation_registerEnergyResource_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -914,6 +958,70 @@ func (ec *executionContext) fieldContext_Mutation_registerUser(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_purchaseEnergy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_purchaseEnergy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().PurchaseEnergy(rctx, fc.Args["in"].(*model.PurchaseEnergy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.EnergyResource)
+	fc.Result = res
+	return ec.marshalOEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_purchaseEnergy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_EnergyResource_id(ctx, field)
+			case "name":
+				return ec.fieldContext_EnergyResource_name(ctx, field)
+			case "producer":
+				return ec.fieldContext_EnergyResource_producer(ctx, field)
+			case "capacity":
+				return ec.fieldContext_EnergyResource_capacity(ctx, field)
+			case "price":
+				return ec.fieldContext_EnergyResource_price(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EnergyResource", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_purchaseEnergy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_users(ctx, field)
 	if err != nil {
@@ -935,11 +1043,14 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1055,7 +1166,7 @@ func (ec *executionContext) _Query_energyResources(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.EnergyResource)
 	fc.Result = res
-	return ec.marshalNEnergyResource2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx, field.Selections, res)
+	return ec.marshalNEnergyResource2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResourceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_energyResources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1367,11 +1478,14 @@ func (ec *executionContext) _User_resources(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.EnergyResource)
 	fc.Result = res
-	return ec.marshalOEnergyResource2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResourceᚄ(ctx, field.Selections, res)
+	return ec.marshalNEnergyResource2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResourceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_resources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3350,6 +3464,40 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputPurchaseEnergy(ctx context.Context, obj any) (model.PurchaseEnergy, error) {
+	var it model.PurchaseEnergy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "capacity"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "capacity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Capacity = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRegisterEnergyResource(ctx context.Context, obj any) (model.RegisterEnergyResource, error) {
 	var it model.RegisterEnergyResource
 	asMap := map[string]any{}
@@ -3526,6 +3674,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_registerUser(ctx, field)
 			})
+		case "purchaseEnergy":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_purchaseEnergy(ctx, field)
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3571,13 +3723,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "users":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_users(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -3687,6 +3842,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "resources":
 			out.Values[i] = ec._User_resources(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4060,7 +4218,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNEnergyResource2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx context.Context, sel ast.SelectionSet, v []*model.EnergyResource) graphql.Marshaler {
+func (ec *executionContext) marshalNEnergyResource2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EnergyResource) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4084,7 +4242,7 @@ func (ec *executionContext) marshalNEnergyResource2ᚕᚖgithubᚗcomᚋnikitaru
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx, sel, v[i])
+			ret[i] = ec.marshalNEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4094,6 +4252,12 @@ func (ec *executionContext) marshalNEnergyResource2ᚕᚖgithubᚗcomᚋnikitaru
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
 
 	return ret
 }
@@ -4151,6 +4315,50 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
@@ -4442,58 +4650,19 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOEnergyResource2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EnergyResource) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalOEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐEnergyResource(ctx context.Context, sel ast.SelectionSet, v *model.EnergyResource) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._EnergyResource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPurchaseEnergy2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐPurchaseEnergy(ctx context.Context, v any) (*model.PurchaseEnergy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPurchaseEnergy(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalORegisterEnergyResource2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐRegisterEnergyResource(ctx context.Context, v any) (*model.RegisterEnergyResource, error) {
@@ -4526,53 +4695,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋnikitarudakovᚋmicroenergyᚋapiᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {

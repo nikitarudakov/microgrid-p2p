@@ -27,8 +27,14 @@ message RegisterEnergyResourceInput {
   float price = 5;
 }
 
+message SubtractEnergyResourceCapacityInput {
+  string id = 1;
+  float capacity = 2;
+}
+
 service InventoryManagement {
   rpc RegisterEnergyResource(RegisterEnergyResourceInput) returns (EnergyResource);
+  rpc SubtractEnergyResourceCapacity(SubtractEnergyResourceCapacityInput) returns (EnergyResource);
   rpc FetchAllEnergyResources(google.protobuf.Empty) returns (EnergyResourceList);
   rpc FetchProducerEnergyResources(google.protobuf.StringValue) returns (EnergyResourceList);
 }

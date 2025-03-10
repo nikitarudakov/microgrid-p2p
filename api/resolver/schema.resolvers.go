@@ -7,6 +7,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/nikitarudakov/microenergy/api/model"
 	"github.com/nikitarudakov/microenergy/api/runtime"
@@ -49,6 +50,29 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, in *model.RegisterU
 	}
 
 	return fromProto(user, &model.User{}), nil
+}
+
+// PurchaseEnergy is the resolver for the purchaseEnergy field.
+func (r *mutationResolver) PurchaseEnergy(ctx context.Context, in *model.PurchaseEnergy) (*model.EnergyResource, error) {
+	energyResource, err := r.services.inventoryManagementService.SubtractEnergyResourceCapacity(
+		ctx, toProto(in, &pb.SubtractEnergyResourceCapacityInput{}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	output := fromProto(energyResource, &model.EnergyResource{})
+
+	user, err := r.services.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
+		Id: ptr(energyResource.ProducerId),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("user with provided id %q MUST exist", energyResource.ProducerId)
+	}
+
+	output.Producer = fromProto(user, &model.User{})
+
+	return output, nil
 }
 
 // Users is the resolver for the users field.
@@ -114,3 +138,16 @@ func (r *Resolver) Query() runtime.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) PurchaseEnergyFrom(ctx context.Context, in *model.PurchaseEnergyFrom) (*model.EnergyResource, error) {
+	energyResource, err := r.services.inventoryManagementService.SubtractEnergyResourceCapacity(
+		ctx, toProto(in, &pb.SubtractEnergyResourceCapacityInput{}))
+}
+*/

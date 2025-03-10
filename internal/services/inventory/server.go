@@ -29,6 +29,22 @@ func (s *Server) FetchProducerEnergyResources(_ context.Context, producerId *wra
 	return &pb.EnergyResourceList{EnergyResources: ownersEnergyResources}, nil
 }
 
+func (s *Server) SubtractEnergyResourceCapacity(_ context.Context, in *pb.SubtractEnergyResourceCapacityInput) (*pb.EnergyResource, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var output *pb.EnergyResource
+	for _, er := range s.energyResources {
+		if er.Id == in.Id {
+			(*er).Capacity -= in.Capacity
+			output = er
+			break
+		}
+	}
+
+	return output, nil
+}
+
 func (s *Server) RegisterEnergyResource(_ context.Context, in *pb.RegisterEnergyResourceInput) (*pb.EnergyResource, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

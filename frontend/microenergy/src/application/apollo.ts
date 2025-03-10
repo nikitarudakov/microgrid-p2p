@@ -3,7 +3,7 @@ import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core
 // HTTP connection to the API
 const httpLink = createHttpLink({
   // You should use an absolute URL here
-  uri: 'http://localhost:8080/query',
+  uri: `${import.meta.env.VITE_GRAPHQL_API_BASE_URL}/query`,
 })
 
 // Cache implementation
