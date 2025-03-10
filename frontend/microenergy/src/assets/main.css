@@ -30,6 +30,19 @@ body {
     'Droid Sans',
     'Helvetica Neue',
     sans-serif;
+  background-color: #F9FAFB;
+}
+
+@layer components {
+  .purchase-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    background-color: var(--color-emerald-600);
+    padding: 1rem;
+    cursor: pointer;
+  }
 }
 
 @media (hover: hover) {
