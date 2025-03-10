@@ -19,14 +19,14 @@ func (r *mutationResolver) RegisterEnergyResource(ctx context.Context, in *model
 	input := toProto(in, &pb.RegisterEnergyResourceInput{})
 	input.Id = uuid.New().String()
 
-	user, err := r.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
+	user, err := r.services.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
 		Id: ptr(in.ProducerID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("user with provided id %q MUST exist", in.ProducerID)
 	}
 
-	response, err := r.inventoryManagementService.RegisterEnergyResource(ctx, input)
+	response, err := r.services.inventoryManagementService.RegisterEnergyResource(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, in *model.RegisterU
 	input := toProto(in, &pb.RegisterUserInput{})
 	input.Id = uuid.New().String()
 
-	user, err := r.userManagementService.RegisterUser(ctx, input)
+	user, err := r.services.userManagementService.RegisterUser(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, in *model.RegisterU
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	response, err := r.userManagementService.FetchAllUsers(ctx, &emptypb.Empty{})
+	response, err := r.services.userManagementService.FetchAllUsers(ctx, &emptypb.Empty{})
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
-	user, err := r.userManagementService.FetchUser(ctx, &pb.FetchUserInput{Id: &id})
+	user, err := r.services.userManagementService.FetchUser(ctx, &pb.FetchUserInput{Id: &id})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 
 // EnergyResources is the resolver for the energy_resources field.
 func (r *queryResolver) EnergyResources(ctx context.Context) ([]*model.EnergyResource, error) {
-	response, err := r.inventoryManagementService.FetchAllEnergyResources(ctx, &emptypb.Empty{})
+	response, err := r.services.inventoryManagementService.FetchAllEnergyResources(ctx, &emptypb.Empty{})
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (r *queryResolver) EnergyResources(ctx context.Context) ([]*model.EnergyRes
 		energyResource := fromProto(er, &model.EnergyResource{})
 
 		// Fetch energy producer
-		producer, err := r.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
+		producer, err := r.services.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
 			Id: ptr(er.ProducerId),
 		})
 		if err != nil {

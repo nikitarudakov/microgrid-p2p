@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
+	"os"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	})
 
 	// Build the Host Connection String
-	host := fmt.Sprintf(":%s", "5001")
+	host := fmt.Sprintf(":%s", os.Getenv("USER_PORT"))
 
 	// Create the TCP Listener
 	lis, err := net.Listen("tcp", host)

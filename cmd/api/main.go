@@ -1,12 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"github.com/nikitarudakov/microenergy/internal/pb"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net/http"
 	"os"
@@ -31,37 +27,13 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
-
-	inventoryGrpcCli, err := grpc.NewClient(
-		fmt.Sprintf(":%s", "5000"),
-		grpc.WithTransportCredentials(
-			insecure.NewCredentials(),
-		),
-	)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	userGrpcCli, err := grpc.NewClient(
-		fmt.Sprintf(":%s", "5001"),
-		grpc.WithTransportCredentials(
-			insecure.NewCredentials(),
-		),
-	)
+	r, err := resolver.New(logger)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	srv := handler.New(runtime.NewExecutableSchema(runtime.Config{
-		Resolvers: resolver.NewResolver(
-			pb.NewInventoryManagementClient(inventoryGrpcCli),
-			pb.NewUserManagementClient(userGrpcCli),
-			logger,
-		),
+		Resolvers: r,
 	}))
 
 	srv.AddTransport(transport.Options{})
@@ -85,6 +57,11 @@ func main() {
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", c.Handler(srv))
+
+	port := os.Getenv("GRAPHQL_API_PORT")
+	if port == "" {
+		port = defaultPort
+	}
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
