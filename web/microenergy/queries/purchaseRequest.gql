@@ -1,0 +1,14 @@
+mutation PurchaseEnergy ($id: ID!, $capacity: Float!) {
+    purchaseEnergy(in: {
+        id: $id
+        capacity: $capacity
+    }) {
+        name
+        producer {
+            first_name
+            last_name
+        }
+        capacity
+        price
+    }
+}
