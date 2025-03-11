@@ -1,21 +1,12 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import {type EnergyResource, useEnergyResourcesStore} from "~/stores/energyResources";
 
 // Events this component will emit
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
-const props = defineProps<{
-  id: string,
-  name: string,
-  producer: {
-    first_name: string,
-    last_name: string
-  },
-  capacity: number,
-  price: number,
-}>()
+const props = defineProps<EnergyResource>()
 
-// Updated when user uses range input to select desired energy capacity for purchase
+// Bound to input range value
 const selectedEnergyCapacity = ref(0);
 
 const calculateTotalPrice = (): number => {
@@ -24,16 +15,21 @@ const calculateTotalPrice = (): number => {
 }
 
 // Handling purchase request
-async function submitPurchaseRequest() {
-  await useAsyncGql({
-    operation: 'PurchaseEnergy',
-    variables: {
-      id: props.id,
-      capacity: selectedEnergyCapacity,
-    },
-  });
-}
+const store = useEnergyResourcesStore()
 
+async function submitPurchaseRequest() {
+  const GqlInstance = useGql()
+
+  const data = await GqlInstance('PurchaseEnergy', {
+    id: props.id,
+    capacity: selectedEnergyCapacity.value,
+  })
+
+  if (data.purchaseEnergy) {
+    store.updateEnergyResource(data.purchaseEnergy);
+    emit('close');
+  }
+}
 </script>
 
 <template>

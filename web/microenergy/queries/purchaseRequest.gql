@@ -3,6 +3,7 @@ mutation PurchaseEnergy ($id: ID!, $capacity: Float!) {
         id: $id
         capacity: $capacity
     }) {
+        id
         name
         producer {
             first_name

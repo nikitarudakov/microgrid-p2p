@@ -1,9 +1,8 @@
 <script setup lang="ts">
+import type {User} from "~/stores/energyResources";
+
 defineProps<{
-  user: {
-    first_name: string;
-    last_name: string;
-  }
+  user: User
 }>()
 </script>
 

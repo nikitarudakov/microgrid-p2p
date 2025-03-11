@@ -1,7 +1,6 @@
 <template>
-  <div v-if="error">Here is an error: {{ error.statusCode }}</div>
   <ul class="whitespace-nowrap">
-    <li v-for="resource in data?.energyResources" :key="resource.name">
+    <li v-for="resource in store.energyResources" :key="resource.name">
       <EnergyListing :energy-resource=resource />
     </li>
   </ul>
@@ -17,5 +16,9 @@ ul {
 </style>
 
 <script setup lang="ts">
-const { data, error } = await useAsyncGql({ operation: 'EnergyResources' });
+import {useEnergyResourcesStore} from "~/stores/energyResources";
+
+// Fetch energy resource via GraphQL API
+const store = useEnergyResourcesStore()
+await callOnce('energyResources', () => store.fetch())
 </script>

@@ -2,17 +2,11 @@
 import { computed, ref } from 'vue'
 import SolarPanelIcon from "~/assets/img/solarPanelIcon.svg"
 import WindIcon from "~/assets/img/windIcon.svg"
-// import PurchasePopUp from '@/components/PurchasePopUp.vue'
 import UserIcon from "~/components/UserIcon.vue";
+import type {EnergyResource} from "~/stores/energyResources";
 
 const props = defineProps<{
-  energyResource: {
-    id: string,
-    name: string,
-    capacity: number,
-    price: number,
-    producer: { first_name: string, last_name: string }
-  }
+  energyResource: EnergyResource
 }>()
 
 // Used for showing pop-up
@@ -27,7 +21,6 @@ const energyTypeIcon = computed(() => {
   }
 })
 </script>
-
 
 <template>
   <div class="flex flex-wrap gap-3 px-10 py-8 drop-shadow-xl bg-white rounded-xl">
