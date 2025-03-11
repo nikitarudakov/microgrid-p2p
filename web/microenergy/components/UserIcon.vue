@@ -13,7 +13,7 @@ defineProps<{
       <p class="font-bold">{{ `${user.first_name} ${user.last_name}` }}</p>
       <div class="flex gap-1">
         <img src="~/assets/img/verified.svg" alt="verified">
-        <p class="text-emerald-800">Verified</p>
+        <p class="text-emerald-800">Verified Producer</p>
       </div>
     </div>
   </div>
