@@ -14,18 +14,18 @@ const totalPrice = computed(() => {
 
 <template>
   <section>
-    <p>Price Breakdown</p>
-    <ul>
-      <li>
-        <span>Price per kWh: </span>
-        <span>{{ price }}</span>
+    <p class="font-[500]">Price Breakdown</p>
+    <ul class="my-2 border-b-1 border-gray-300 py-2">
+      <li class="flex justify-between">
+        <span class="text-gray-600">Price per kWh: </span>
+        <span>${{ price }}</span>
       </li>
-      <li>
-        <span>Transaction Fee: </span>
+      <li class="flex justify-between">
+        <span class="text-gray-600">Transaction Fee: </span>
         <span>$2.50</span>
       </li>
     </ul>
-    <p>
+    <p class="flex justify-between font-medium">
       <span>Total Price: </span>
       <span>${{ totalPrice }}</span>
     </p>

@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import SolarPanelIcon from "~/assets/img/solarPanelIcon.svg"
-import WindIcon from "~/assets/img/windIcon.svg"
+import { ref } from 'vue'
 import UserIcon from "~/components/UserIcon.vue";
 import type {EnergyResource} from "~/stores/energyResources";
 
@@ -11,15 +9,6 @@ const props = defineProps<{
 
 // Used for showing pop-up
 const showPurchasePopUp = ref(false)
-
-// Define icon based on energy resource type
-const energyTypeIcon = computed(() => {
-  if (props.energyResource.name == "Solar") {
-    return SolarPanelIcon
-  } else {
-    return WindIcon
-  }
-})
 </script>
 
 <template>
@@ -28,8 +17,7 @@ const energyTypeIcon = computed(() => {
 
     <ul class="mt-3">
       <li class="flex">
-        <img :src=energyTypeIcon alt="energy_type_icon">
-        <p>{{ energyResource.name }}</p>
+        <EnergyTypeIcon :name=energyResource.name />
       </li>
       <li class="flex">
         <img src="~/assets/img/grayLightningIcon.svg" alt="energy_icon">
@@ -62,11 +50,5 @@ li {
   align-items: center;
   gap: 1em;
   max-height: 60px;
-
-  img {
-    max-width: 20px;
-    width: 20px;
-    max-height: 16px;
-  }
 }
 </style>

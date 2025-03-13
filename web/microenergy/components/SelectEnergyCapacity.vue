@@ -8,14 +8,14 @@ const inputValue = defineModel()
 
 <template>
   <section>
-    <label class="block" for="energy">Select Capacity</label>
-    <div class="flex items-center gap-x-[1em]">
+    <label class="block font-[500]" for="energy">Select Capacity</label>
+    <div class="flex items-center gap-x-[1em] my-4">
       <input v-model="inputValue" type="range" id="energy" name="energy" min="1" :max="max_capacity" step="0.01"/>
-      <span>{{ inputValue }} <br> kWh</span>
+      <span class="font-medium text-gray-800 w-[50px] shrink-2">{{ inputValue }} <br> kWh</span>
     </div>
     <div class="flex justify-between">
-      <p>Min: 1 kWh</p>
-      <p>Max: {{ max_capacity }} kWh</p>
+      <p class="text-gray-600">Min: 1 kWh</p>
+      <p class="text-gray-600">Max: {{ max_capacity.toFixed(0) }} kWh</p>
     </div>
   </section>
 </template>

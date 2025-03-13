@@ -43,9 +43,18 @@ async function submitPurchaseRequest() {
         <p>Purchase clean energy directly from local producers</p>
       </div>
 
-      <div class="box col-span-2">
-        <UserIcon :user=producer />
-        <p class="leading-10 text-gray-600">Available Energy: {{ props.capacity.toFixed(0) }} kWh</p>
+      <div id="purchase-info-user" class="box grid col-span-2">
+        <div class="row-span-2">
+          <UserIcon :user=producer />
+        </div>
+        <div class="flex col-start-2 gap-2">
+          <img class="icon" src="~/assets/img/starIcon.svg" alt="starIcon" />
+          <div>4.9 <span class="text-gray-600">(234 trades)</span></div>
+        </div>
+        <div class="flex gap-2 items-center col-start-2">
+          <EnergyTypeIcon :name=name />
+        </div>
+        <p class="mt-2 text-gray-600">Available Energy: <span class="font-medium">{{ props.capacity.toFixed(0) }} kWh</span></p>
       </div>
 
       <div class="box">
@@ -74,6 +83,11 @@ async function submitPurchaseRequest() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
+}
+
+#purchase-info-user {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
 }
 
 #purchase-info-close {

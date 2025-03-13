@@ -20,5 +20,7 @@
 </template>
 
 <style scoped>
-
+div > p:nth-child(1) {
+  font-weight: 500;
+}
 </style>
