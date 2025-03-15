@@ -372,6 +372,7 @@ input RegisterUser {
 
 input PurchaseEnergy {
   id: ID!
+  consumer_id: String!
   capacity: Float!
 }
 
@@ -3471,7 +3472,7 @@ func (ec *executionContext) unmarshalInputPurchaseEnergy(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "capacity"}
+	fieldsInOrder := [...]string{"id", "consumer_id", "capacity"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3485,6 +3486,13 @@ func (ec *executionContext) unmarshalInputPurchaseEnergy(ctx context.Context, ob
 				return it, err
 			}
 			it.ID = data
+		case "consumer_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consumer_id"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConsumerID = data
 		case "capacity":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
 			data, err := ec.unmarshalNFloat2float64(ctx, v)

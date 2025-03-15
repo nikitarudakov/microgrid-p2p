@@ -1,6 +1,7 @@
 mutation PurchaseEnergy ($id: ID!, $capacity: Float!) {
     purchaseEnergy(in: {
         id: $id
+        consumer_id: "94240d86-eed3-42a0-b711-62a8e2ab71d9"
         capacity: $capacity
     }) {
         id

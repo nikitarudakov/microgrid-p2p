@@ -14,8 +14,9 @@ type Mutation struct {
 }
 
 type PurchaseEnergy struct {
-	ID       string  `json:"id"`
-	Capacity float64 `json:"capacity"`
+	ID         string  `json:"id"`
+	ConsumerID string  `json:"consumer_id"`
+	Capacity   float64 `json:"capacity"`
 }
 
 type Query struct {

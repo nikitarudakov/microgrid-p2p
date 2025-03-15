@@ -10,8 +10,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt/eslint": "1.2.0",
     "@pinia/nuxt": "0.10.1",
     "@tailwindcss/vite": "^4.0.12",
+    "eslint": "^9.0.0",
     "nuxt": "^3.16.0",
     "nuxt-graphql-client": "0.2.43",
     "pinia": "^3.0.1",

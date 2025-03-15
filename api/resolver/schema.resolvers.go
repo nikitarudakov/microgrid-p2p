@@ -54,11 +54,22 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, in *model.RegisterU
 
 // PurchaseEnergy is the resolver for the purchaseEnergy field.
 func (r *mutationResolver) PurchaseEnergy(ctx context.Context, in *model.PurchaseEnergy) (*model.EnergyResource, error) {
-	energyResource, err := r.services.inventoryManagementService.SubtractEnergyResourceCapacity(
-		ctx, toProto(in, &pb.SubtractEnergyResourceCapacityInput{}),
+	energyResource, err := r.services.inventoryManagementService.ReserveEnergyCapacity(
+		ctx, &pb.ReservedEnergyCapacity{
+			Id:               uuid.New().String(),
+			EnergyResourceId: in.ID,
+			ConsumerId:       in.ConsumerID,
+			Capacity:         float32(in.Capacity),
+			Status:           "requested",
+		},
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// Subtract reserved capacity from total capacity
+	for _, reserved := range energyResource.ReservedCapacity {
+		energyResource.Capacity -= reserved.Capacity
 	}
 
 	output := fromProto(energyResource, &model.EnergyResource{})
@@ -109,6 +120,11 @@ func (r *queryResolver) EnergyResources(ctx context.Context) ([]*model.EnergyRes
 
 	var output []*model.EnergyResource
 	for _, er := range response.EnergyResources {
+		// Subtract reserved capacity from total capacity
+		for _, reserved := range er.ReservedCapacity {
+			er.Capacity -= reserved.Capacity
+		}
+
 		// Convert from energy resource proto
 		energyResource := fromProto(er, &model.EnergyResource{})
 
@@ -138,16 +154,3 @@ func (r *Resolver) Query() runtime.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) PurchaseEnergyFrom(ctx context.Context, in *model.PurchaseEnergyFrom) (*model.EnergyResource, error) {
-	energyResource, err := r.services.inventoryManagementService.SubtractEnergyResourceCapacity(
-		ctx, toProto(in, &pb.SubtractEnergyResourceCapacityInput{}))
-}
-*/

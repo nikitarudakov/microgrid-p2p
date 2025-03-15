@@ -7,12 +7,21 @@ option go_package = "./;pb";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
+message ReservedEnergyCapacity {
+  string id = 1;
+  string energy_resource_id = 2;
+  string consumer_id = 3;
+  float capacity = 4;
+  string status = 5; // being delivered, reserved, unavailable etc.
+}
+
 message EnergyResource {
   string id = 1;
   string name = 2;
   string producer_id = 3;
   float capacity = 4;
-  float price = 5;
+  repeated ReservedEnergyCapacity reserved_capacity = 5;
+  float price = 6;
 }
 
 message EnergyResourceList {
@@ -34,7 +43,7 @@ message SubtractEnergyResourceCapacityInput {
 
 service InventoryManagement {
   rpc RegisterEnergyResource(RegisterEnergyResourceInput) returns (EnergyResource);
-  rpc SubtractEnergyResourceCapacity(SubtractEnergyResourceCapacityInput) returns (EnergyResource);
+  rpc ReserveEnergyCapacity(ReservedEnergyCapacity) returns (EnergyResource);
   rpc FetchAllEnergyResources(google.protobuf.Empty) returns (EnergyResourceList);
   rpc FetchProducerEnergyResources(google.protobuf.StringValue) returns (EnergyResourceList);
 }

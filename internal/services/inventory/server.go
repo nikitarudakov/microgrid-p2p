@@ -29,14 +29,14 @@ func (s *Server) FetchProducerEnergyResources(_ context.Context, producerId *wra
 	return &pb.EnergyResourceList{EnergyResources: ownersEnergyResources}, nil
 }
 
-func (s *Server) SubtractEnergyResourceCapacity(_ context.Context, in *pb.SubtractEnergyResourceCapacityInput) (*pb.EnergyResource, error) {
+func (s *Server) ReserveEnergyCapacity(_ context.Context, in *pb.ReservedEnergyCapacity) (*pb.EnergyResource, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	var output *pb.EnergyResource
 	for _, er := range s.energyResources {
-		if er.Id == in.Id {
-			(*er).Capacity -= in.Capacity
+		if er.Id == in.EnergyResourceId {
+			er.ReservedCapacity = append(er.ReservedCapacity, in)
 			output = er
 			break
 		}

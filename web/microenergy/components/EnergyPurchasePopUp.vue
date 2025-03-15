@@ -17,16 +17,19 @@ const inputEnergyCapacityValue = useState<number>(() => { return 0; });
 const store = useEnergyResourcesStore()
 
 async function submitPurchaseRequest() {
-  const GqlInstance = useGql()
+  try {
+    const GqlInstance = useGql();
+    const { purchaseEnergy } = await GqlInstance('PurchaseEnergy', {
+      id: props.id,
+      capacity: inputEnergyCapacityValue.value,
+    });
 
-  const data = await GqlInstance('PurchaseEnergy', {
-    id: props.id,
-    capacity: inputEnergyCapacityValue.value,
-  })
-
-  if (data.purchaseEnergy) {
-    store.updateEnergyResource(data.purchaseEnergy);
-    emit('close');
+    if (purchaseEnergy) {
+      store.updateEnergyResource(purchaseEnergy);
+      emit('close');
+    }
+  } catch (error) {
+    console.error('Failed to purchase energy:', error);
   }
 }
 </script>
@@ -47,31 +50,24 @@ async function submitPurchaseRequest() {
         <div class="row-span-2">
           <UserIcon :user=producer />
         </div>
-        <div class="flex col-start-2 gap-2">
+        <div class="flex col-start-2 gap-2 ml-2">
           <img class="icon" src="~/assets/img/starIcon.svg" alt="starIcon" />
           <div>4.9 <span class="text-gray-600">(234 trades)</span></div>
         </div>
-        <div class="flex gap-2 items-center col-start-2">
+        <div class="flex gap-2 items-center col-start-2 ml-2">
           <EnergyTypeIcon :name=name />
         </div>
-        <p class="mt-2 text-gray-600">Available Energy: <span class="font-medium">{{ props.capacity.toFixed(0) }} kWh</span></p>
+        <p class="mt-2 text-gray-600">Available Energy: <span class="font-medium">{{ capacity.toFixed(0) }} kWh</span></p>
       </div>
 
-      <div class="box">
-        <SelectEnergyCapacity v-model="inputEnergyCapacityValue" :max_capacity=capacity />
-      </div>
-
-      <div class="box">
-        <PriceBreakdown v-model=inputEnergyCapacityValue :price=price />
-      </div>
-
-      <div class="box col-span-2">
-        <OrderInformation />
-      </div>
+      <SelectEnergyCapacity class="box" v-model="inputEnergyCapacityValue" :max_capacity=capacity />
+      <PriceBreakdown class="box" :capacity=inputEnergyCapacityValue :price=price />
+      <OrderInformation class="box col-span-2"/>
 
       <button
+          :disabled="inputEnergyCapacityValue <= 0 || inputEnergyCapacityValue > props.capacity"
           @click="submitPurchaseRequest"
-          class="box col-span-2 bg-emerald-600 text-white drop-shadow-xl cursor-pointer">
+          class="box col-span-2 bg-emerald-600 text-white drop-shadow-xl cursor-pointer disabled:bg-gray-400">
         Buy Now
       </button>
     </div>
@@ -86,7 +82,7 @@ async function submitPurchaseRequest() {
 }
 
 #purchase-info-user {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: auto 1fr;
   grid-template-rows: auto;
 }
 

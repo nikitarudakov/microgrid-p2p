@@ -33,6 +33,7 @@ input RegisterUser {
 
 input PurchaseEnergy {
   id: ID!
+  consumer_id: String!
   capacity: Float!
 }
 

@@ -1,12 +1,11 @@
 <script setup lang="ts">
 const props = defineProps<{
   price: number
+  capacity: number
 }>()
 
-const inputEnergyCapacityValue = defineModel()
-
 const totalPrice = computed(() => {
-  let totalPrice = Number(inputEnergyCapacityValue.value) * props.price
+  let totalPrice = Number(props.capacity) * props.price
   return Math.round((totalPrice + Number.EPSILON) * 100) / 100
 })
 
