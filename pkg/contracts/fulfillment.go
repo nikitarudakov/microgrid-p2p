@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
-	"github.com/nikitarudakov/microenergy/internal/services/bidding"
-	"github.com/nikitarudakov/microenergy/internal/services/inventory"
+	"github.com/nikitarudakov/microenergy/pkg/services/bidding"
+	"github.com/nikitarudakov/microenergy/pkg/services/inventory"
 	"log"
 )
 

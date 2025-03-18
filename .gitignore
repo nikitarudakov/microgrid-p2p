@@ -2,3 +2,5 @@
 .vscode/
 ./frontend
 .env
+
+./cmd/contracts/fulfillment/vendor/
