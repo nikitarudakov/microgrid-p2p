@@ -3,4 +3,4 @@
 ./frontend
 .env
 
-./cmd/contracts/fulfillment/vendor/
+volumes/

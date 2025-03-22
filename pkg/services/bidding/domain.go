@@ -17,7 +17,7 @@ type ServiceWindow struct {
 type Competition struct {
 	ConsumerName   string          `json:"consumer_name"`
 	Capacity       float32         `json:"capacity"`
-	Duration       int32           `json:"duration"`
+	Lifespan       int32           `json:"lifespan"`
 	Voltage        Voltage         `json:"voltage"`
 	ServiceWindows []ServiceWindow `json:"service_windows"`
 	Bids           []Bid           `json:"bids"`

@@ -10,8 +10,6 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"github.com/nikitarudakov/microenergy/pkg/contracts"
-	"github.com/nikitarudakov/microenergy/pkg/services/bidding"
-	"github.com/nikitarudakov/microenergy/pkg/services/inventory"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
@@ -66,7 +64,7 @@ func main() {
 		chaincodeName = ccname
 	}
 
-	channelName := "competition1"
+	channelName := "mychannel"
 	if cname := os.Getenv("CHANNEL_NAME"); cname != "" {
 		channelName = cname
 	}
@@ -75,31 +73,43 @@ func main() {
 	contract := network.GetContract(chaincodeName)
 
 	registerArrangement(contract)
+	getAllAgreements(contract)
+}
+
+func getAllAgreements(contract *client.Contract) {
+	evaluateResult, err := contract.EvaluateTransaction("GetAllAgreements")
+	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+	}
+
+	result := formatJSON(evaluateResult)
+
+	fmt.Printf("*** Result:%s\n", result)
 }
 
 func registerArrangement(contract *client.Contract) {
 	agreement := &contracts.Agreement{
 		ID: "Agreement1",
-		Competition: bidding.Competition{
-			ConsumerName: "ConsumerName",
-			Capacity:     145.12,
-			Duration:     30,
-			Voltage: bidding.Voltage{
-				Min: 2.3,
-				Max: 4.5,
-			},
-			ServiceWindows: []bidding.ServiceWindow{},
-			Bids:           []bidding.Bid{},
-		},
-		Obligation: contracts.Obligation{
-			Capacity:   100.00,
-			MaxRuntime: 10,
-			Pricing:    []contracts.PricingType{{Type: "utilization", Value: 0.23}},
-			Asset: inventory.Asset{
-				MeterID: "M0001",
-			},
-		},
-		RequestedDispatches: []contracts.RequestedDispatch{},
+		//Competition: bidding.Competition{
+		//	ConsumerName: "ConsumerName",
+		//	Capacity:     145.12,
+		//	Lifespan:     30,
+		//	Voltage: bidding.Voltage{
+		//		Min: 2.3,
+		//		Max: 4.5,
+		//	},
+		//	ServiceWindows: []bidding.ServiceWindow{},
+		//	Bids:           []bidding.Bid{},
+		//},
+		//Obligation: contracts.Obligation{
+		//	Capacity:   100.00,
+		//	MaxRuntime: 10,
+		//	Pricing:    []contracts.PricingType{{Type: "utilization", Value: 0.23}},
+		//	Asset: inventory.Asset{
+		//		MeterID: "M0001",
+		//	},
+		//},
+		//RequestedDispatches: []contracts.RequestedDispatch{},
 	}
 
 	data, err := json.Marshal(agreement)
