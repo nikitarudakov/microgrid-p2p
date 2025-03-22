@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./;pb";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+message Meter {
+  string id = 1;
+  float baseline = 2;
+}
+
+message Reading {
+  string meter_id = 1;
+  float value = 2;
+}
+
+service Metering {
+  rpc FetchMeter(google.protobuf.StringValue) returns (Meter);
+  rpc UploadMeteringReadings(stream Reading) returns (google.protobuf.Empty);
+}

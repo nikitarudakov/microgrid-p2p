@@ -88,7 +88,7 @@ func getAllAgreements(contract *client.Contract) {
 }
 
 func registerArrangement(contract *client.Contract) {
-	agreement := &contracts.Agreement{
+	agreement := &contracts.Obligation{
 		ID: "Agreement1",
 		//Competition: bidding.Competition{
 		//	ConsumerName: "ConsumerName",
@@ -119,7 +119,7 @@ func registerArrangement(contract *client.Contract) {
 
 	print(formatJSON(data))
 
-	_, err = contract.SubmitTransaction("RegisterAgreement", formatJSON(data))
+	_, err = contract.SubmitTransaction("RegisterObligation", formatJSON(data))
 	if err != nil {
 		var endorseErr *client.EndorseError
 
