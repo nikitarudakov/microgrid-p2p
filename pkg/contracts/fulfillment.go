@@ -3,129 +3,218 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/google/uuid"
+	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
-	"log"
+	"math"
 	"time"
 )
 
-var (
-	ErrRequestCapacityLimitExceeded = errors.New("requested capacity exceeds an obligated capacity")
-	ErrRequestNotInServiceWindow    = errors.New("request is out of service window time range")
-)
-
-// Voltage represent voltage requirements for a competition
-type Voltage struct {
-	Min float32 `json:"min"`
-	Max float32 `json:"max"`
-}
-
-// TimeWindow is used to describe Dispatch requested time window
-// Start - format:
+// TimeWindow defines time brackets with StartTime and EndTime
 type TimeWindow struct {
-	Start string `json:"start"`
-	End   string `json:"end"`
+	StartTime string  `json:"start_time"`
+	EndTime   string  `json:"end_time"`
+	Baseline  float64 `json:"baseline"`
 }
 
-type Runtime struct {
-	Start int64 `json:"start"`
-	End   int64 `json:"end"`
-}
+func (tw TimeWindow) Hours() (float64, error) {
+	layout := time.RFC3339
 
-func (tw TimeWindow) parseForToday() (time.Time, time.Time, error) {
-	start, err := parseServiceWindowEdge(tw.Start)
+	startTime, err := time.Parse(layout, tw.StartTime)
 	if err != nil {
-		return time.Time{}, time.Time{}, err
+		return 0, err
 	}
-	end, err := parseServiceWindowEdge(tw.End)
+
+	endTime, err := time.Parse(layout, tw.EndTime)
 	if err != nil {
-		return start, time.Time{}, err
+		return 0, err
 	}
-	return start, end, err
+
+	// Calculate the duration and convert to hours
+	duration := endTime.Sub(startTime)
+
+	return duration.Hours(), nil
 }
 
-func (tw TimeWindow) Includes(tw2 TimeWindow) bool {
-	start1, end1, err := tw.parseForToday()
+func (tw TimeWindow) Parse() (time.Time, time.Time, error) {
+	layout := time.RFC3339
+
+	startTime, err := time.Parse(layout, tw.StartTime)
 	if err != nil {
-		log.Printf("error parsing time window: %s - %s", tw.Start, tw.End)
+		return time.Time{}, time.Time{}, fmt.Errorf("invalid start time: %w", err)
+	}
+
+	endTime, err := time.Parse(layout, tw.EndTime)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("invalid end time: %w", err)
+	}
+
+	return startTime, endTime, nil
+}
+
+func (tw TimeWindow) Contains(tw2 TimeWindow) bool {
+	start1, end1, err := tw.Parse()
+	if err != nil {
 		return false
 	}
 
-	start2, end2, err := tw2.parseForToday()
+	start2, end2, err := tw2.Parse()
 	if err != nil {
-		log.Printf("error parsing time window: %s - %s", tw2.Start, tw2.End)
 		return false
 	}
 
-	// If overlaps return false
-	if start2.Before(start1) || end2.After(end1) {
-		return false
-	}
-
-	// Completely includes a time interval
-	return true
+	return (start1.Before(start2) || start1.Equal(start2)) && (end1.After(end2) || end1.Equal(end2))
 }
 
-// Dispatch represents recorded dispatch of FSP
-type Dispatch struct {
-	ObligationID string  `json:"obligation_id"`
-	RequestID    string  `json:"request_id"`
-	Flexibility  float32 `json:"capacity"`
-	Runtime      Runtime `json:"runtime"`
+// Contract is based on a competition details and a winning bid.
+type Contract struct {
+	// Unique contract identifier
+	ID      string `json:"id"`
+	DocType string `json:"doc_type"`
+	// Parties data
+	BuyerID       string `json:"buyer_id"`
+	SellerID      string `json:"seller_id"`
+	CompetitionID string `json:"competition_id"`
+	// Contract's terms
+	StartDate  string     `json:"start_dates"`
+	EndDate    string     `json:"end_date"`
+	Penalty    float64    `json:"penalty"`
+	TimeWindow TimeWindow `json:"time_window"`
+	// Bid Data
+	Capacity          float64 `json:"capacity"`
+	MaxRuntimeSeconds int32   `json:"max_runtime_seconds"`
+	AvailabilityPrice float64 `json:"availability_price"`
+	UtilizationPrice  float64 `json:"utilization_price"`
+	ServiceFee        float64 `json:"service_fee"`
+	// Might be a single asset or a group of assets
+	Assets []string `json:"assets"`
 }
 
-// PricingType is used to describe a pricing used in the FSP's bid
-type PricingType struct {
-	Type  string  `json:"type"`
-	Value float32 `json:"value"`
-}
-
-// Request represents a dispatch requested by a consumer
-// It is a key structure for verifying agreement fulfillment.
-type Request struct {
-	ID           string     `json:"id"`
-	ObligationID string     `json:"obligation_id"`
-	Capacity     float32    `json:"capacity"`
-	Status       string     `json:"status"`
-	TimeWindow   TimeWindow `json:"time_window"`
-}
-
-// Obligation represents an agreed deal between FSP and SO.
-// It stores all the data needed for validating FSPs dispatches and their requests from SOs.
+// Obligation takes hold after FSP accepts dispatch request
+// - Status: if unfulfilled an FSP is a subject to penalty, in any case settle for a provided flexibility.
 type Obligation struct {
-	ID            string     `json:"id"`
-	Capacity      float32    `json:"capacity"`
-	ServiceWindow TimeWindow `json:"service_window"`
-	Frequency     string     `json:"frequency"`
-	MeterID       string     `json:"meter_id"`
+	ID         string     `json:"id"`
+	DocType    string     `json:"doc_type"`
+	ContractID string     `json:"contract_id"`
+	TimeWindow TimeWindow `json:"time_window"`
+	Direction  string     `json:"direction"` // import or export
+	Status     string     `json:"status"`    // fulfilled, unfulfilled, stop_requested
+	Capacity   float64    `json:"capacity"`
 }
 
-func (a Obligation) validateRequest(req Request) error {
-	if !a.ServiceWindow.Includes(req.TimeWindow) {
-		return ErrRequestNotInServiceWindow
+func (o Obligation) validate(c *Contract) error {
+	if !c.TimeWindow.Contains(o.TimeWindow) {
+		return &OutOfRangeTimeWindowError{
+			startC: c.TimeWindow.StartTime,
+			endC:   c.TimeWindow.EndTime,
+			startO: o.TimeWindow.StartTime,
+			endO:   o.TimeWindow.EndTime,
+		}
 	}
 
-	// Check if capacity does not exceed agreed one
-	if req.Capacity > a.Capacity {
-		return ErrRequestCapacityLimitExceeded
+	if c.Capacity > o.Capacity {
+		return &RequestedCapacityExceededError{
+			contracted: c.Capacity,
+			requested:  o.Capacity,
+		}
 	}
 
 	return nil
 }
 
-// Fulfillment works on Hyperledger smart contract technology.
-// It automatically handles verification of dispatch and billing.
+// Dispatch is recorded at the end of obligation time brackets.
+// It is further validated against an Obligation.
+type Dispatch struct {
+	ID           string     `json:"id"`
+	DocType      string     `json:"doc_type"`
+	ObligationID string     `json:"obligation_id"`
+	TimeWindow   TimeWindow `json:"time_window"`
+	Direction    string     `json:"direction"`
+	Capacity     float64    `json:"capacity"`
+}
+
+func (d *Dispatch) calculatePayableAmount(c *Contract, o *Obligation) float64 {
+	if c.ServiceFee != 0 {
+		return c.ServiceFee
+	}
+
+	var totalAmount float64
+	hours, _ := d.TimeWindow.Hours()
+
+	// Add availability amount
+	totalAmount += c.Capacity * c.AvailabilityPrice * hours
+
+	// Add dispatch amount
+	totalAmount += math.Abs(o.TimeWindow.Baseline-d.Capacity) * c.UtilizationPrice
+
+	return totalAmount
+}
+
+func (d *Dispatch) validate(o *Obligation) error {
+	if d.Capacity < o.Capacity {
+		return &InsufficientCapacityError{dispatched: d.Capacity, needed: o.Capacity}
+	}
+
+	if o.Direction != d.Direction {
+		return &IncorrectDirectionError{dispatched: d.Direction, needed: o.Direction}
+	}
+
+	startD, endD, err := d.TimeWindow.Parse()
+	if err != nil {
+		return err
+	}
+
+	startO, endO, err := o.TimeWindow.Parse()
+	if err != nil {
+		return err
+	}
+
+	// If was started after obliged or ended before obliged
+	if startD.After(startO) || endD.Before(endO) {
+		return &ViolatedTimeWindowError{
+			startD: d.TimeWindow.StartTime, endD: d.TimeWindow.EndTime,
+			startO: d.TimeWindow.StartTime, endO: d.TimeWindow.StartTime,
+		}
+	}
+
+	return nil
+}
+
+type Settlement struct {
+	ID         string  `json:"ID"`
+	DispatchID string  `json:"dispatch_id"`
+	Type       string  `json:"type"` // payable or penalised
+	Fiat       float64 `json:"fiat"`
+	SettledAt  string  `json:"settled_at"`
+}
+
 type Fulfillment struct {
 	contractapi.Contract
 }
 
-// RegisterObligation stores agreement which contains information about the competition
-// and its bids. This method should be used after competition auction has finished and
-// a set of bids that fulfill competition requirement were accepted.
-func (f *Fulfillment) RegisterObligation(
-	ctx contractapi.TransactionContextInterface,
-	obligation *Obligation,
-) error {
+func (f *Fulfillment) BindContract(ctx contractapi.TransactionContextInterface, contract *Contract) error {
 	stub := ctx.GetStub()
+
+	data, err := json.Marshal(contract)
+	if err != nil {
+		return err
+	}
+
+	return stub.PutState(contract.ID, data)
+}
+
+func (f *Fulfillment) RegisterObligation(ctx contractapi.TransactionContextInterface, obligation *Obligation) error {
+	stub := ctx.GetStub()
+
+	contract, err := fetchDocByID[Contract](stub, obligation.ContractID, "contract")
+	if err != nil {
+		return err
+	}
+
+	if err := obligation.validate(contract); err != nil {
+		return err
+	}
 
 	data, err := json.Marshal(obligation)
 	if err != nil {
@@ -135,34 +224,138 @@ func (f *Fulfillment) RegisterObligation(
 	return stub.PutState(obligation.ID, data)
 }
 
-// RequestDispatch validates a dispatch request of System Operator and updates
-// agreement's requests slice. The requests slice can be used for audit purposes.
-func (f *Fulfillment) RequestDispatch(ctx contractapi.TransactionContextInterface, req Request) error {
+// RecordObligationStoppage should result in immediate settlement
+func (f *Fulfillment) RecordObligationStoppage(ctx contractapi.TransactionContextInterface, obligationID string) error {
 	stub := ctx.GetStub()
 
-	data, err := stub.GetState(req.ObligationID)
+	obligation, err := fetchDocByID[Obligation](stub, obligationID, "obligation")
 	if err != nil {
 		return err
 	}
 
-	obligation := &Obligation{}
-	if err := json.Unmarshal(data, obligation); err != nil {
-		return nil
-	}
+	obligation.Status = "stop_requested"
 
-	if err := obligation.validateRequest(req); err != nil {
-		return err
-	}
-
-	// Emit event that is used to track metering data
-	if err := stub.SetEvent("DispatchRequested", []byte(obligation.MeterID)); err != nil {
-		return err
-	}
-
-	data, err = json.Marshal(obligation)
+	data, err := json.Marshal(obligation)
 	if err != nil {
 		return err
 	}
 
 	return stub.PutState(obligation.ID, data)
+}
+
+func (f *Fulfillment) RecordDispatch(ctx contractapi.TransactionContextInterface, dispatch *Dispatch) error {
+	stub := ctx.GetStub()
+
+	data, err := json.Marshal(dispatch)
+	if err != nil {
+		return err
+	}
+
+	// TODO: in contract check that availability checks were passed
+
+	return stub.PutState(dispatch.ID, data)
+}
+
+func (f *Fulfillment) Settlement(ctx contractapi.TransactionContextInterface, dispatchID string) error {
+	stub := ctx.GetStub()
+
+	dispatch, err := fetchDocByID[Dispatch](stub, dispatchID, "dispatch")
+	if err != nil {
+		return err
+	}
+
+	obligation, err := fetchDocByID[Obligation](stub, dispatch.ObligationID, "obligation")
+	if err != nil {
+		return err
+	}
+
+	contract, err := fetchDocByID[Contract](stub, obligation.ContractID, "contract")
+	if err != nil {
+		return err
+	}
+
+	settlement := &Settlement{
+		ID:         uuid.New().String(),
+		DispatchID: dispatchID,
+		SettledAt:  time.Now().Format(time.RFC3339),
+	}
+
+	if err := dispatch.validate(obligation); err != nil {
+		settlement.Type = "penalty"
+		settlement.Fiat = contract.Penalty
+	} else {
+		settlement.Type = "payable"
+		settlement.Fiat = dispatch.calculatePayableAmount(contract, obligation)
+	}
+
+	data, err := json.Marshal(settlement)
+	if err != nil {
+		return err
+	}
+
+	return stub.PutState(settlement.ID, data)
+}
+
+func fetchContractualObligations(stub shim.ChaincodeStubInterface, contractID string, timestamp time.Time) ([]*Obligation, error) {
+	query := fmt.Sprintf(`{
+		"selector": {
+			"doc_type": "%s",
+			"contract_id": "%s",
+			"registration_date": "%s"
+		}
+	}`, "obligation", contractID, timestamp.Format(time.DateOnly))
+
+	results, err := stub.GetQueryResult(query)
+	if err != nil {
+		return nil, err
+	}
+	defer results.Close()
+
+	var obligations []*Obligation
+	if results.HasNext() {
+		res, err := results.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var o Obligation
+		if err := json.Unmarshal(res.Value, &o); err != nil {
+			return nil, err
+		}
+
+		obligations = append(obligations, &o)
+	}
+
+	return obligations, nil
+}
+
+func fetchDocByID[T interface{}](stub shim.ChaincodeStubInterface, id, docType string) (*T, error) {
+	query := fmt.Sprintf(`{
+		"selector": {
+			"doc_type": "%s",
+			"id": "%s"
+		}
+	}`, docType, id)
+
+	results, err := stub.GetQueryResult(query)
+	if err != nil {
+		return nil, err
+	}
+	defer results.Close()
+
+	if results.HasNext() {
+		res, err := results.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var o T
+		if err := json.Unmarshal(res.Value, &o); err != nil {
+			return nil, err
+		}
+
+		return &o, nil
+	}
+
+	return nil, errors.New("not found")
 }
