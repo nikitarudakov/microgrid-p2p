@@ -17,7 +17,7 @@ import (
 
 // RegisterEnergyResource is the resolver for the registerEnergyResource field.
 func (r *mutationResolver) RegisterEnergyResource(ctx context.Context, in *model.RegisterEnergyResource) (*model.EnergyResource, error) {
-	input := toProto(in, &pb.RegisterEnergyResourceInput{})
+	input := pb.ToProto(in, &pb.RegisterEnergyResourceInput{})
 	input.Id = uuid.New().String()
 
 	user, err := r.services.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
@@ -32,16 +32,16 @@ func (r *mutationResolver) RegisterEnergyResource(ctx context.Context, in *model
 		return nil, err
 	}
 
-	energyResource := fromProto(response, &model.EnergyResource{})
+	energyResource := pb.FromProto(response, &model.EnergyResource{})
 
-	energyResource.Producer = fromProto(user, &model.User{})
+	energyResource.Producer = pb.FromProto(user, &model.User{})
 
 	return energyResource, nil
 }
 
 // RegisterUser is the resolver for the registerUser field.
 func (r *mutationResolver) RegisterUser(ctx context.Context, in *model.RegisterUser) (*model.User, error) {
-	input := toProto(in, &pb.RegisterUserInput{})
+	input := pb.ToProto(in, &pb.RegisterUserInput{})
 	input.Id = uuid.New().String()
 
 	user, err := r.services.userManagementService.RegisterUser(ctx, input)
@@ -49,7 +49,7 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, in *model.RegisterU
 		return nil, err
 	}
 
-	return fromProto(user, &model.User{}), nil
+	return pb.FromProto(user, &model.User{}), nil
 }
 
 // PurchaseEnergy is the resolver for the purchaseEnergy field.
@@ -72,7 +72,7 @@ func (r *mutationResolver) PurchaseEnergy(ctx context.Context, in *model.Purchas
 		energyResource.Capacity -= reserved.Capacity
 	}
 
-	output := fromProto(energyResource, &model.EnergyResource{})
+	output := pb.FromProto(energyResource, &model.EnergyResource{})
 
 	user, err := r.services.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
 		Id: ptr(energyResource.ProducerId),
@@ -81,7 +81,7 @@ func (r *mutationResolver) PurchaseEnergy(ctx context.Context, in *model.Purchas
 		return nil, fmt.Errorf("user with provided id %q MUST exist", energyResource.ProducerId)
 	}
 
-	output.Producer = fromProto(user, &model.User{})
+	output.Producer = pb.FromProto(user, &model.User{})
 
 	return output, nil
 }
@@ -95,7 +95,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 
 	var output []*model.User
 	for _, user := range response.Users {
-		output = append(output, fromProto(user, &model.User{}))
+		output = append(output, pb.FromProto(user, &model.User{}))
 	}
 
 	return output, nil
@@ -108,7 +108,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 		return nil, err
 	}
 
-	return fromProto(user, &model.User{}), nil
+	return pb.FromProto(user, &model.User{}), nil
 }
 
 // EnergyResources is the resolver for the energy_resources field.
@@ -126,7 +126,7 @@ func (r *queryResolver) EnergyResources(ctx context.Context) ([]*model.EnergyRes
 		}
 
 		// Convert from energy resource proto
-		energyResource := fromProto(er, &model.EnergyResource{})
+		energyResource := pb.FromProto(er, &model.EnergyResource{})
 
 		// Fetch energy producer
 		producer, err := r.services.userManagementService.FetchUser(ctx, &pb.FetchUserInput{
@@ -138,7 +138,7 @@ func (r *queryResolver) EnergyResources(ctx context.Context) ([]*model.EnergyRes
 		}
 
 		// Convert to producer model
-		energyResource.Producer = fromProto(producer, &model.User{})
+		energyResource.Producer = pb.FromProto(producer, &model.User{})
 
 		output = append(output, energyResource)
 	}

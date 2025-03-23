@@ -6,18 +6,18 @@ option go_package = "./;pb";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
-message Meter {
-  string id = 1;
-  float baseline = 2;
-}
-
+// Reading is a processed from external systems structure.
+// It is temporarily stored for aggregation and dispatch tracking purposes.
 message Reading {
-  string meter_id = 1;
-  float value = 2;
+  google.protobuf.Timestamp record_at = 1;
+  string dispatch_id = 2;
+  string meter_id = 3;
+  string interval = 4;
+  float value = 5;
 }
 
 service Metering {
-  rpc FetchMeter(google.protobuf.StringValue) returns (Meter);
-  rpc UploadMeteringReadings(stream Reading) returns (google.protobuf.Empty);
+  rpc UploadMeteringReading(Reading) returns (google.protobuf.Empty);
 }

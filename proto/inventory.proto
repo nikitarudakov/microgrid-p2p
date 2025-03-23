@@ -41,7 +41,11 @@ message SubtractEnergyResourceCapacityInput {
   float capacity = 2;
 }
 
+message Asset {}
+message AvailabilitySummary {}
+
 service InventoryManagement {
+  rpc CheckAssetAvailability(google.protobuf.StringValue) returns (AvailabilitySummary);
   rpc RegisterEnergyResource(RegisterEnergyResourceInput) returns (EnergyResource);
   rpc ReserveEnergyCapacity(ReservedEnergyCapacity) returns (EnergyResource);
   rpc FetchAllEnergyResources(google.protobuf.Empty) returns (EnergyResourceList);

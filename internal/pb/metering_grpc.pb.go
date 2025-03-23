@@ -12,7 +12,6 @@ import (
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -21,16 +20,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Metering_FetchMeter_FullMethodName             = "/pb.Metering/FetchMeter"
-	Metering_UploadMeteringReadings_FullMethodName = "/pb.Metering/UploadMeteringReadings"
+	Metering_UploadMeteringReading_FullMethodName = "/pb.Metering/UploadMeteringReading"
 )
 
 // MeteringClient is the client API for Metering service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MeteringClient interface {
-	FetchMeter(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Meter, error)
-	UploadMeteringReadings(ctx context.Context, opts ...grpc.CallOption) (Metering_UploadMeteringReadingsClient, error)
+	UploadMeteringReading(ctx context.Context, in *Reading, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type meteringClient struct {
@@ -41,55 +38,20 @@ func NewMeteringClient(cc grpc.ClientConnInterface) MeteringClient {
 	return &meteringClient{cc}
 }
 
-func (c *meteringClient) FetchMeter(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Meter, error) {
-	out := new(Meter)
-	err := c.cc.Invoke(ctx, Metering_FetchMeter_FullMethodName, in, out, opts...)
+func (c *meteringClient) UploadMeteringReading(ctx context.Context, in *Reading, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Metering_UploadMeteringReading_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *meteringClient) UploadMeteringReadings(ctx context.Context, opts ...grpc.CallOption) (Metering_UploadMeteringReadingsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Metering_ServiceDesc.Streams[0], Metering_UploadMeteringReadings_FullMethodName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &meteringUploadMeteringReadingsClient{stream}
-	return x, nil
-}
-
-type Metering_UploadMeteringReadingsClient interface {
-	Send(*Reading) error
-	CloseAndRecv() (*emptypb.Empty, error)
-	grpc.ClientStream
-}
-
-type meteringUploadMeteringReadingsClient struct {
-	grpc.ClientStream
-}
-
-func (x *meteringUploadMeteringReadingsClient) Send(m *Reading) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *meteringUploadMeteringReadingsClient) CloseAndRecv() (*emptypb.Empty, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(emptypb.Empty)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // MeteringServer is the server API for Metering service.
 // All implementations must embed UnimplementedMeteringServer
 // for forward compatibility
 type MeteringServer interface {
-	FetchMeter(context.Context, *wrapperspb.StringValue) (*Meter, error)
-	UploadMeteringReadings(Metering_UploadMeteringReadingsServer) error
+	UploadMeteringReading(context.Context, *Reading) (*emptypb.Empty, error)
 	mustEmbedUnimplementedMeteringServer()
 }
 
@@ -97,11 +59,8 @@ type MeteringServer interface {
 type UnimplementedMeteringServer struct {
 }
 
-func (UnimplementedMeteringServer) FetchMeter(context.Context, *wrapperspb.StringValue) (*Meter, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FetchMeter not implemented")
-}
-func (UnimplementedMeteringServer) UploadMeteringReadings(Metering_UploadMeteringReadingsServer) error {
-	return status.Errorf(codes.Unimplemented, "method UploadMeteringReadings not implemented")
+func (UnimplementedMeteringServer) UploadMeteringReading(context.Context, *Reading) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadMeteringReading not implemented")
 }
 func (UnimplementedMeteringServer) mustEmbedUnimplementedMeteringServer() {}
 
@@ -116,48 +75,22 @@ func RegisterMeteringServer(s grpc.ServiceRegistrar, srv MeteringServer) {
 	s.RegisterService(&Metering_ServiceDesc, srv)
 }
 
-func _Metering_FetchMeter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
+func _Metering_UploadMeteringReading_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Reading)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MeteringServer).FetchMeter(ctx, in)
+		return srv.(MeteringServer).UploadMeteringReading(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Metering_FetchMeter_FullMethodName,
+		FullMethod: Metering_UploadMeteringReading_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MeteringServer).FetchMeter(ctx, req.(*wrapperspb.StringValue))
+		return srv.(MeteringServer).UploadMeteringReading(ctx, req.(*Reading))
 	}
 	return interceptor(ctx, in, info, handler)
-}
-
-func _Metering_UploadMeteringReadings_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MeteringServer).UploadMeteringReadings(&meteringUploadMeteringReadingsServer{stream})
-}
-
-type Metering_UploadMeteringReadingsServer interface {
-	SendAndClose(*emptypb.Empty) error
-	Recv() (*Reading, error)
-	grpc.ServerStream
-}
-
-type meteringUploadMeteringReadingsServer struct {
-	grpc.ServerStream
-}
-
-func (x *meteringUploadMeteringReadingsServer) SendAndClose(m *emptypb.Empty) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *meteringUploadMeteringReadingsServer) Recv() (*Reading, error) {
-	m := new(Reading)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 // Metering_ServiceDesc is the grpc.ServiceDesc for Metering service.
@@ -168,16 +101,10 @@ var Metering_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*MeteringServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "FetchMeter",
-			Handler:    _Metering_FetchMeter_Handler,
+			MethodName: "UploadMeteringReading",
+			Handler:    _Metering_UploadMeteringReading_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "UploadMeteringReadings",
-			Handler:       _Metering_UploadMeteringReadings_Handler,
-			ClientStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "metering.proto",
 }

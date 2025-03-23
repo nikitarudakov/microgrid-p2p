@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hyperledger/fabric-chaincode-go/v2/shim"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
-	"math"
 	"time"
 )
 
@@ -126,16 +125,15 @@ func (o Obligation) validate(c *Contract) error {
 // Dispatch is recorded at the end of obligation time brackets.
 // It is further validated against an Obligation.
 type Dispatch struct {
-	ID            string     `json:"id"`
-	DocType       string     `json:"doc_type"`
-	ObligationID  string     `json:"obligation_id"`
-	TimeWindow    TimeWindow `json:"time_window"`
-	Direction     string     `json:"direction"`
-	Capacity      float64    `json:"capacity"`
-	TimeAvailable int64      `json:"time_available"`
+	ID           string     `json:"id"`
+	DocType      string     `json:"doc_type"`
+	ObligationID string     `json:"obligation_id"`
+	TimeWindow   TimeWindow `json:"time_window"`
+	Direction    string     `json:"direction"`
+	Capacity     float64    `json:"capacity"`
 }
 
-func (d *Dispatch) calculatePayableAmount(c *Contract, o *Obligation) float64 {
+func (d *Dispatch) calculatePayableAmount(c *Contract) float64 {
 	if c.ServiceFee != 0 {
 		return c.ServiceFee
 	}
@@ -147,7 +145,7 @@ func (d *Dispatch) calculatePayableAmount(c *Contract, o *Obligation) float64 {
 	totalAmount += c.Capacity * c.AvailabilityPrice * hours
 
 	// Add dispatch amount
-	totalAmount += math.Abs(o.TimeWindow.Baseline-d.Capacity) * c.UtilizationPrice
+	totalAmount += d.Capacity * c.UtilizationPrice
 
 	return totalAmount
 }
@@ -279,14 +277,14 @@ func (f *Fulfillment) Settlement(ctx contractapi.TransactionContextInterface, di
 		ID:         uuid.New().String(),
 		DispatchID: dispatchID,
 		SettledAt:  time.Now().Format(time.RFC3339),
+		Fiat:       dispatch.calculatePayableAmount(contract),
 	}
 
 	if err := dispatch.validate(obligation); err != nil {
 		settlement.Type = "penalty"
-		settlement.Fiat = contract.Penalty
+		settlement.Fiat -= contract.Penalty
 	} else {
 		settlement.Type = "payable"
-		settlement.Fiat = dispatch.calculatePayableAmount(contract, obligation)
 	}
 
 	data, err := json.Marshal(settlement)

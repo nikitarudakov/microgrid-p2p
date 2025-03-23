@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/nikitarudakov/microenergy/internal/pb"
-	"github.com/nikitarudakov/microenergy/pkg/services/user"
+	"github.com/nikitarudakov/microenergy/internal/services/user"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
