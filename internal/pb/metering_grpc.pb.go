@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Metering_UploadMeteringReading_FullMethodName = "/pb.Metering/UploadMeteringReading"
+	Metering_RecordDispatch_FullMethodName        = "/pb.Metering/RecordDispatch"
 )
 
 // MeteringClient is the client API for Metering service.
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MeteringClient interface {
 	UploadMeteringReading(ctx context.Context, in *Reading, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RecordDispatch(ctx context.Context, in *RecordDispatchRequest, opts ...grpc.CallOption) (*RecordDispatchResponse, error)
 }
 
 type meteringClient struct {
@@ -47,11 +49,21 @@ func (c *meteringClient) UploadMeteringReading(ctx context.Context, in *Reading,
 	return out, nil
 }
 
+func (c *meteringClient) RecordDispatch(ctx context.Context, in *RecordDispatchRequest, opts ...grpc.CallOption) (*RecordDispatchResponse, error) {
+	out := new(RecordDispatchResponse)
+	err := c.cc.Invoke(ctx, Metering_RecordDispatch_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MeteringServer is the server API for Metering service.
 // All implementations must embed UnimplementedMeteringServer
 // for forward compatibility
 type MeteringServer interface {
 	UploadMeteringReading(context.Context, *Reading) (*emptypb.Empty, error)
+	RecordDispatch(context.Context, *RecordDispatchRequest) (*RecordDispatchResponse, error)
 	mustEmbedUnimplementedMeteringServer()
 }
 
@@ -61,6 +73,9 @@ type UnimplementedMeteringServer struct {
 
 func (UnimplementedMeteringServer) UploadMeteringReading(context.Context, *Reading) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadMeteringReading not implemented")
+}
+func (UnimplementedMeteringServer) RecordDispatch(context.Context, *RecordDispatchRequest) (*RecordDispatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RecordDispatch not implemented")
 }
 func (UnimplementedMeteringServer) mustEmbedUnimplementedMeteringServer() {}
 
@@ -93,6 +108,24 @@ func _Metering_UploadMeteringReading_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Metering_RecordDispatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordDispatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MeteringServer).RecordDispatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Metering_RecordDispatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MeteringServer).RecordDispatch(ctx, req.(*RecordDispatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Metering_ServiceDesc is the grpc.ServiceDesc for Metering service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -103,6 +136,10 @@ var Metering_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadMeteringReading",
 			Handler:    _Metering_UploadMeteringReading_Handler,
+		},
+		{
+			MethodName: "RecordDispatch",
+			Handler:    _Metering_RecordDispatch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

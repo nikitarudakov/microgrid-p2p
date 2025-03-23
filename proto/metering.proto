@@ -14,10 +14,23 @@ message Reading {
   google.protobuf.Timestamp record_at = 1;
   string dispatch_id = 2;
   string meter_id = 3;
-  string interval = 4;
+  float interval = 4;
   float value = 5;
+  float baseline = 6;
+  string direction = 7;
+}
+
+message RecordDispatchRequest {
+  string dispatch_id = 1;
+  google.protobuf.Timestamp start_time = 2;
+  google.protobuf.Timestamp end_time = 3;
+}
+
+message RecordDispatchResponse {
+  string msg = 1;
 }
 
 service Metering {
   rpc UploadMeteringReading(Reading) returns (google.protobuf.Empty);
+  rpc RecordDispatch(RecordDispatchRequest) returns (RecordDispatchResponse);
 }
