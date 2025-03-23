@@ -126,12 +126,13 @@ func (o Obligation) validate(c *Contract) error {
 // Dispatch is recorded at the end of obligation time brackets.
 // It is further validated against an Obligation.
 type Dispatch struct {
-	ID           string     `json:"id"`
-	DocType      string     `json:"doc_type"`
-	ObligationID string     `json:"obligation_id"`
-	TimeWindow   TimeWindow `json:"time_window"`
-	Direction    string     `json:"direction"`
-	Capacity     float64    `json:"capacity"`
+	ID            string     `json:"id"`
+	DocType       string     `json:"doc_type"`
+	ObligationID  string     `json:"obligation_id"`
+	TimeWindow    TimeWindow `json:"time_window"`
+	Direction     string     `json:"direction"`
+	Capacity      float64    `json:"capacity"`
+	TimeAvailable int64      `json:"time_available"`
 }
 
 func (d *Dispatch) calculatePayableAmount(c *Contract, o *Obligation) float64 {
@@ -204,6 +205,8 @@ func (f *Fulfillment) BindContract(ctx contractapi.TransactionContextInterface, 
 	return stub.PutState(contract.ID, data)
 }
 
+// RegisterObligation called after all availability checks were passed
+// and a system can start tracking dispatches for an obligation.
 func (f *Fulfillment) RegisterObligation(ctx contractapi.TransactionContextInterface, obligation *Obligation) error {
 	stub := ctx.GetStub()
 
@@ -251,8 +254,6 @@ func (f *Fulfillment) RecordDispatch(ctx contractapi.TransactionContextInterface
 		return err
 	}
 
-	// TODO: in contract check that availability checks were passed
-
 	return stub.PutState(dispatch.ID, data)
 }
 
@@ -294,39 +295,6 @@ func (f *Fulfillment) Settlement(ctx contractapi.TransactionContextInterface, di
 	}
 
 	return stub.PutState(settlement.ID, data)
-}
-
-func fetchContractualObligations(stub shim.ChaincodeStubInterface, contractID string, timestamp time.Time) ([]*Obligation, error) {
-	query := fmt.Sprintf(`{
-		"selector": {
-			"doc_type": "%s",
-			"contract_id": "%s",
-			"registration_date": "%s"
-		}
-	}`, "obligation", contractID, timestamp.Format(time.DateOnly))
-
-	results, err := stub.GetQueryResult(query)
-	if err != nil {
-		return nil, err
-	}
-	defer results.Close()
-
-	var obligations []*Obligation
-	if results.HasNext() {
-		res, err := results.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		var o Obligation
-		if err := json.Unmarshal(res.Value, &o); err != nil {
-			return nil, err
-		}
-
-		obligations = append(obligations, &o)
-	}
-
-	return obligations, nil
 }
 
 func fetchDocByID[T interface{}](stub shim.ChaincodeStubInterface, id, docType string) (*T, error) {
