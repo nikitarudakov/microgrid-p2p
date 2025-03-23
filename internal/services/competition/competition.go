@@ -1,0 +1,49 @@
+package competition
+
+import (
+	"context"
+	"github.com/google/uuid"
+	"github.com/nikitarudakov/microenergy/internal/pb"
+	"gorm.io/gorm"
+	"time"
+)
+
+type ServiceWindow struct {
+	StartTime         time.Time `json:"start_time"`
+	EndTime           time.Time `json:"end_time"`
+	Weekdays          []string  `json:"weekdays"`
+	Capacity          float32   `json:"capacity"`
+	MinRuntimeMinutes int32     `json:"min_runtime_minutes"`
+}
+
+type Service struct {
+	Type           string          `json:"type"`
+	ServiceWindows []ServiceWindow `json:"service_windows"`
+}
+
+type Competition struct {
+	ID          uuid.UUID `json:"id"`
+	OrganizerID uuid.UUID `json:"organizer_id"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+	MinVoltage  float32   `json:"min_voltage"`
+	MaxVoltage  float32   `json:"max_voltage"`
+	MinBudget   float32   `json:"min_budget"`
+	MaxBudget   float32   `json:"max_budget"`
+	Services    []Service `json:"services"`
+}
+
+type Server struct {
+	db *gorm.DB
+	pb.UnimplementedCompetitionManagementServer
+}
+
+func (s *Server) RegisterCompetition(_ context.Context, in *pb.Competition) (*pb.Competition, error) {
+	competition := pb.FromProto(in, &Competition{})
+
+	if err := s.db.Create(competition).Error; err != nil {
+		return nil, err
+	}
+
+	return pb.ToProto(competition, &pb.Competition{}), nil
+}

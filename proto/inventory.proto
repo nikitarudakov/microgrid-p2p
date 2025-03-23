@@ -6,48 +6,31 @@ option go_package = "./;pb";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
-message ReservedEnergyCapacity {
+message Asset {
+  enum ServiceType {
+    UNKNOWN = 0;
+    CONSUMPTION_TURN_UP = 1;
+    CONSUMPTION_TURN_DOWN = 2;
+    GENERATION_TURN_UP = 3;
+    GENERATION_TURN_DOWN = 4;
+  }
+
   string id = 1;
-  string energy_resource_id = 2;
-  string consumer_id = 3;
-  float capacity = 4;
-  string status = 5; // being delivered, reserved, unavailable etc.
+  string ref = 2;
+  string name = 3;
+  string import_meter_id = 4;
+  string export_meter_id = 5;
+  string provider_id = 6;
+  float voltage_level = 7;
+  int32 max_runtime_minutes = 8;
+  float max_capacity = 9;
+  double latitude = 10;
+  double longitude = 11;
+  repeated ServiceType services  = 12;
 }
-
-message EnergyResource {
-  string id = 1;
-  string name = 2;
-  string producer_id = 3;
-  float capacity = 4;
-  repeated ReservedEnergyCapacity reserved_capacity = 5;
-  float price = 6;
-}
-
-message EnergyResourceList {
-  repeated EnergyResource energy_resources = 1;
-}
-
-message RegisterEnergyResourceInput {
-  string id = 1;
-  string name = 2;
-  string producer_id = 3;
-  float capacity = 4;
-  float price = 5;
-}
-
-message SubtractEnergyResourceCapacityInput {
-  string id = 1;
-  float capacity = 2;
-}
-
-message Asset {}
-message AvailabilitySummary {}
 
 service InventoryManagement {
-  rpc CheckAssetAvailability(google.protobuf.StringValue) returns (AvailabilitySummary);
-  rpc RegisterEnergyResource(RegisterEnergyResourceInput) returns (EnergyResource);
-  rpc ReserveEnergyCapacity(ReservedEnergyCapacity) returns (EnergyResource);
-  rpc FetchAllEnergyResources(google.protobuf.Empty) returns (EnergyResourceList);
-  rpc FetchProducerEnergyResources(google.protobuf.StringValue) returns (EnergyResourceList);
+  rpc RegisterAsset(Asset) returns (Asset);
 }

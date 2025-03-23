@@ -12,22 +12,6 @@ services:
     ports:
       - "${GRAPHQL_API_PORT}:${GRAPHQL_API_PORT}"
     env_file: .env
-  user-service:
-    networks: [ microenergy ]
-    build:
-      context: .
-      dockerfile: cmd/user/Dockerfile
-    expose:
-      - "${USER_PORT}"
-    env_file: .env
-  inventory-service:
-    networks: [ microenergy ]
-    build:
-      context: .
-      dockerfile: cmd/inventory/Dockerfile
-    expose:
-      - "${INVENTORY_PORT}"
-    env_file: .env
 
 networks:
   microenergy: {}

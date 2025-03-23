@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./;pb";
+
+import "google/protobuf/timestamp.proto";
+
+message ServiceWindow {
+  enum Weekday {
+    UNKNOWN = 0;
+    MON = 1;
+    TUE = 2;
+    WED = 3;
+    THU = 4;
+    FRI = 5;
+    SAT = 6;
+    SUN = 7;
+  }
+
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+  repeated Weekday days = 3;
+  int32 min_runtime_minutes = 4;
+  float capacity = 5;
+}
+
+message Service {
+  enum Type {
+    UNKNOWN = 0;
+    CONSUMPTION_TURN_UP = 1;
+    CONSUMPTION_TURN_DOWN = 2;
+    GENERATION_TURN_UP = 3;
+    GENERATION_TURN_DOWN = 4;
+  }
+
+  Type type = 1;
+  ServiceWindow service_window = 2;
+}
+
+message Competition {
+  string id = 1;
+  string organizer_id = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  float min_voltage = 5;
+  float max_voltage = 6;
+  repeated Service services = 7;
+  float min_budget = 8;
+  float max_budget = 9;
+}
+
+service CompetitionManagement {
+  rpc RegisterCompetition(Competition) returns (Competition);
+}
