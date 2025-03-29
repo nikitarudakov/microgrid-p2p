@@ -14,12 +14,12 @@ type Asset struct {
 	ImportMeterID     string    `json:"import_meter_id"`
 	ExportMeterID     string    `json:"export_meter_id"`
 	ProviderID        string    `json:"provider_id"`
-	MaxCapacity       float32   `json:"max_capacity"`
 	VoltageLevel      float32   `json:"voltage_level"`
-	MaxRuntimeMinutes int32     `json:"max_runtime_minutes"`
 	Latitude          float64   `json:"latitude"`
 	Longitude         float64   `json:"longitude"`
-	Services          []string  `json:"services"`
+	MaxCapacity       float32   `json:"max_capacity"`
+	MinRuntimeMinutes int32     `json:"min_runtime_minutes"`
+	MaxRuntimeMinutes int32     `json:"max_runtime_minutes"`
 }
 
 type Server struct {

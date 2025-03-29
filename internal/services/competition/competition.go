@@ -8,17 +8,12 @@ import (
 	"time"
 )
 
-type ServiceWindow struct {
+type Window struct {
 	StartTime         time.Time `json:"start_time"`
 	EndTime           time.Time `json:"end_time"`
 	Weekdays          []string  `json:"weekdays"`
 	Capacity          float32   `json:"capacity"`
 	MinRuntimeMinutes int32     `json:"min_runtime_minutes"`
-}
-
-type Service struct {
-	Type           string          `json:"type"`
-	ServiceWindows []ServiceWindow `json:"service_windows"`
 }
 
 type Competition struct {
@@ -28,9 +23,11 @@ type Competition struct {
 	EndTime     time.Time `json:"end_time"`
 	MinVoltage  float32   `json:"min_voltage"`
 	MaxVoltage  float32   `json:"max_voltage"`
-	MinBudget   float32   `json:"min_budget"`
 	MaxBudget   float32   `json:"max_budget"`
-	Services    []Service `json:"services"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	Radius      float64   `json:"radius"`
+	Windows     []*Window `json:"windows"`
 }
 
 type Server struct {

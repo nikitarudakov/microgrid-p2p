@@ -38,6 +38,12 @@ message Service {
   ServiceWindow service_window = 2;
 }
 
+message Geography {
+  double latitude = 1;
+  double longitude = 2;
+  double radius = 3;
+}
+
 message Competition {
   string id = 1;
   string organizer_id = 2;
@@ -46,8 +52,9 @@ message Competition {
   float min_voltage = 5;
   float max_voltage = 6;
   repeated Service services = 7;
-  float min_budget = 8;
-  float max_budget = 9;
+  Geography geo = 8;
+  float min_budget = 9;
+  float max_budget = 10;
 }
 
 service CompetitionManagement {
