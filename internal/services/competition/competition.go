@@ -9,6 +9,7 @@ import (
 )
 
 type Window struct {
+	CompetitionID     uuid.UUID `json:"competition_id"`
 	StartTime         time.Time `json:"start_time"`
 	EndTime           time.Time `json:"end_time"`
 	Weekdays          []string  `json:"weekdays"`

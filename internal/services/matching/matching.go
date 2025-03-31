@@ -1,12 +1,19 @@
 package matching
 
 import (
+	"github.com/google/uuid"
 	"github.com/nikitarudakov/microenergy/internal/services/competition"
 	"github.com/nikitarudakov/microenergy/internal/services/inventory"
 	"math"
 	"math/rand"
 	"slices"
 )
+
+type Match struct {
+	Window *competition.Window
+	Asset  *inventory.Asset
+	Score  float64
+}
 
 type Service struct{}
 
@@ -24,6 +31,41 @@ func (s *Service) Filter(comp *competition.Competition, assets []*inventory.Asse
 	})
 
 	return eligibleByAnyWindow
+}
+
+func (s *Service) Match(comp *competition.Competition, assets []*inventory.Asset) []*Match {
+	filteredAssets := s.Filter(comp, assets)
+
+	usedAssets := map[uuid.UUID]bool{}
+	var matches []*Match
+
+	for _, window := range comp.Windows {
+		var bestMatch *Match
+		var bestScore float64
+
+		for _, asset := range filteredAssets {
+			// Skip if already used
+			if usedAssets[asset.ID] {
+				continue
+			}
+			if !isEligibleServiceWindow(asset, window) {
+				continue
+			}
+
+			score := s.Score(asset, window, comp)
+			if bestMatch == nil || score > bestScore {
+				bestMatch = &Match{Window: window, Asset: asset, Score: score}
+				bestScore = score
+			}
+		}
+
+		if bestMatch != nil {
+			matches = append(matches, bestMatch)
+			usedAssets[bestMatch.Asset.ID] = true // Mark asset as used
+		}
+	}
+
+	return matches
 }
 
 func (s *Service) Score(asset *inventory.Asset, window *competition.Window, comp *competition.Competition) float64 {
