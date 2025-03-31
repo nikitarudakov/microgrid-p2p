@@ -126,7 +126,6 @@ type Contract struct {
 	TimeWindow TimeWindow `json:"time_window"`
 	// Bid Data
 	Capacity          float64 `json:"capacity"`
-	MaxRuntimeSeconds int32   `json:"max_runtime_seconds"`
 	AvailabilityPrice float64 `json:"availability_price"`
 	UtilizationPrice  float64 `json:"utilization_price"`
 	ServiceFee        float64 `json:"service_fee"`

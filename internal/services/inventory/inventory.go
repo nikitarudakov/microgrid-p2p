@@ -11,9 +11,9 @@ type Asset struct {
 	ID                uuid.UUID `json:"id"`
 	Ref               string    `json:"ref"`
 	Name              string    `json:"name"`
-	ImportMeterID     string    `json:"import_meter_id"`
-	ExportMeterID     string    `json:"export_meter_id"`
-	ProviderID        string    `json:"provider_id"`
+	ImportMeterID     uuid.UUID `json:"import_meter_id"`
+	ExportMeterID     uuid.UUID `json:"export_meter_id"`
+	ProviderID        uuid.UUID `json:"provider_id"`
 	VoltageLevel      float32   `json:"voltage_level"`
 	Latitude          float64   `json:"latitude"`
 	Longitude         float64   `json:"longitude"`
