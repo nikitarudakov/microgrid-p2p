@@ -26,6 +26,24 @@ func (f *Fulfillment) BindContract(ctx contractapi.TransactionContextInterface, 
 	return stub.PutState(contract.ID, data)
 }
 
+func (f *Fulfillment) SetPenalty(ctx contractapi.TransactionContextInterface, contractID string, penalty float64) error {
+	stub := ctx.GetStub()
+
+	contract, err := fetchDocByID[onchain.Contract](stub, contractID, "contract")
+	if err != nil {
+		return err
+	}
+
+	contract.Penalty = penalty
+
+	data, err := json.Marshal(contract)
+	if err != nil {
+		return err
+	}
+
+	return stub.PutState(contractID, data)
+}
+
 // RegisterObligation called after all availability checks were passed
 // and a system can start tracking dispatches for an obligation.
 func (f *Fulfillment) RegisterObligation(ctx contractapi.TransactionContextInterface, obligation *onchain.Obligation) error {
