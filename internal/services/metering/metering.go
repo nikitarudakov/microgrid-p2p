@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"io"
 	"log"
 	"math"
 	"time"
@@ -30,13 +31,24 @@ type Server struct {
 	pb.UnimplementedMeteringServer
 }
 
-func (s *Server) UploadMeteringReading(_ context.Context, in *pb.Reading) (_ *emptypb.Empty, err error) {
+func (s *Server) UploadMeteringReading(stream pb.Metering_UploadMeteringReadingServer) error {
 	coll := s.db.Collection("readings")
-	reading := pb.FromProto(in, &Reading{})
 
-	_, err = coll.InsertOne(context.Background(), reading)
+	for {
+		in, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			return stream.SendAndClose(&emptypb.Empty{})
+		} else if err != nil {
+			return err
+		}
 
-	return
+		reading := pb.FromProto(in, &Reading{})
+
+		_, err = coll.InsertOne(context.Background(), reading)
+		if err != nil {
+			log.Printf("meter [%s] reading upload error: %s\n", reading.MeterID, err)
+		}
+	}
 }
 
 func (s *Server) RecordDispatch(_ context.Context, in *pb.RecordDispatchRequest) (*pb.RecordDispatchResponse, error) {

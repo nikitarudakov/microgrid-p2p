@@ -22,12 +22,12 @@ type Asset struct {
 	MaxRuntimeMinutes int32     `json:"max_runtime_minutes"`
 }
 
-type Server struct {
+type Service struct {
 	db *gorm.DB
 	pb.UnimplementedInventoryManagementServer
 }
 
-func (s *Server) RegisterAsset(_ context.Context, in *pb.Asset) (*pb.Asset, error) {
+func (s *Service) RegisterAsset(_ context.Context, in *pb.Asset) (*pb.Asset, error) {
 	asset := pb.FromProto(in, &Asset{})
 
 	if err := s.db.Create(asset).Error; err != nil {

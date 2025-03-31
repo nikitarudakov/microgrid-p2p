@@ -31,6 +31,6 @@ message RecordDispatchResponse {
 }
 
 service Metering {
-  rpc UploadMeteringReading(Reading) returns (google.protobuf.Empty);
+  rpc UploadMeteringReading(stream Reading) returns (google.protobuf.Empty);
   rpc RecordDispatch(RecordDispatchRequest) returns (RecordDispatchResponse);
 }

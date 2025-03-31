@@ -28,7 +28,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MeteringClient interface {
-	UploadMeteringReading(ctx context.Context, in *Reading, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UploadMeteringReading(ctx context.Context, opts ...grpc.CallOption) (Metering_UploadMeteringReadingClient, error)
 	RecordDispatch(ctx context.Context, in *RecordDispatchRequest, opts ...grpc.CallOption) (*RecordDispatchResponse, error)
 }
 
@@ -40,13 +40,38 @@ func NewMeteringClient(cc grpc.ClientConnInterface) MeteringClient {
 	return &meteringClient{cc}
 }
 
-func (c *meteringClient) UploadMeteringReading(ctx context.Context, in *Reading, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Metering_UploadMeteringReading_FullMethodName, in, out, opts...)
+func (c *meteringClient) UploadMeteringReading(ctx context.Context, opts ...grpc.CallOption) (Metering_UploadMeteringReadingClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Metering_ServiceDesc.Streams[0], Metering_UploadMeteringReading_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &meteringUploadMeteringReadingClient{stream}
+	return x, nil
+}
+
+type Metering_UploadMeteringReadingClient interface {
+	Send(*Reading) error
+	CloseAndRecv() (*emptypb.Empty, error)
+	grpc.ClientStream
+}
+
+type meteringUploadMeteringReadingClient struct {
+	grpc.ClientStream
+}
+
+func (x *meteringUploadMeteringReadingClient) Send(m *Reading) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *meteringUploadMeteringReadingClient) CloseAndRecv() (*emptypb.Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(emptypb.Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *meteringClient) RecordDispatch(ctx context.Context, in *RecordDispatchRequest, opts ...grpc.CallOption) (*RecordDispatchResponse, error) {
@@ -62,7 +87,7 @@ func (c *meteringClient) RecordDispatch(ctx context.Context, in *RecordDispatchR
 // All implementations must embed UnimplementedMeteringServer
 // for forward compatibility
 type MeteringServer interface {
-	UploadMeteringReading(context.Context, *Reading) (*emptypb.Empty, error)
+	UploadMeteringReading(Metering_UploadMeteringReadingServer) error
 	RecordDispatch(context.Context, *RecordDispatchRequest) (*RecordDispatchResponse, error)
 	mustEmbedUnimplementedMeteringServer()
 }
@@ -71,8 +96,8 @@ type MeteringServer interface {
 type UnimplementedMeteringServer struct {
 }
 
-func (UnimplementedMeteringServer) UploadMeteringReading(context.Context, *Reading) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UploadMeteringReading not implemented")
+func (UnimplementedMeteringServer) UploadMeteringReading(Metering_UploadMeteringReadingServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadMeteringReading not implemented")
 }
 func (UnimplementedMeteringServer) RecordDispatch(context.Context, *RecordDispatchRequest) (*RecordDispatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecordDispatch not implemented")
@@ -90,22 +115,30 @@ func RegisterMeteringServer(s grpc.ServiceRegistrar, srv MeteringServer) {
 	s.RegisterService(&Metering_ServiceDesc, srv)
 }
 
-func _Metering_UploadMeteringReading_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Reading)
-	if err := dec(in); err != nil {
+func _Metering_UploadMeteringReading_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MeteringServer).UploadMeteringReading(&meteringUploadMeteringReadingServer{stream})
+}
+
+type Metering_UploadMeteringReadingServer interface {
+	SendAndClose(*emptypb.Empty) error
+	Recv() (*Reading, error)
+	grpc.ServerStream
+}
+
+type meteringUploadMeteringReadingServer struct {
+	grpc.ServerStream
+}
+
+func (x *meteringUploadMeteringReadingServer) SendAndClose(m *emptypb.Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *meteringUploadMeteringReadingServer) Recv() (*Reading, error) {
+	m := new(Reading)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(MeteringServer).UploadMeteringReading(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Metering_UploadMeteringReading_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MeteringServer).UploadMeteringReading(ctx, req.(*Reading))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 func _Metering_RecordDispatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -134,14 +167,16 @@ var Metering_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*MeteringServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UploadMeteringReading",
-			Handler:    _Metering_UploadMeteringReading_Handler,
-		},
-		{
 			MethodName: "RecordDispatch",
 			Handler:    _Metering_RecordDispatch_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "UploadMeteringReading",
+			Handler:       _Metering_UploadMeteringReading_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "metering.proto",
 }
