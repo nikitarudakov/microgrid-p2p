@@ -1,0 +1,5 @@
+apiVersion: v2
+name: fabric-network
+description: Hyperledger Fabric Base Org Deployment
+type: application
+version: 0.1.0

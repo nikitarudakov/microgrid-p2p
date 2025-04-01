@@ -1,0 +1,21 @@
+orgName: org1
+ca:
+  image: hyperledger/fabric-ca:1.5.15
+
+bootstrap:
+  admin:
+    name: admin
+    pass: adminpw
+
+identities:
+  admin:
+    name: admin
+    pass: adminpw
+  peer:
+    name: peer0
+    pass: peerpw
+    mspMountPath: /etc/hyperledger/fabric/msp
+    image: hyperledger/fabric-peer:3.1
+    mspVolume:
+      type: pvc
+      name: peer0-org1-msp-pvc

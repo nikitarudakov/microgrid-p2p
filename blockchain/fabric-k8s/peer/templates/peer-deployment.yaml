@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.identities.peer.name }}-{{ .Values.orgName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.identities.peer.name }}-{{ .Values.orgName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.identities.peer.name }}-{{ .Values.orgName }}
+    spec:
+      containers:
+        - name: fabric-peer
+          image: {{ .Values.identities.peer.image }}
+          env:
+            - name: CORE_PEER_ID
+              value: {{ .Values.identities.peer.name }}-{{ .Values.orgName }}
+            - name: CORE_PEER_ADDRESS
+              value: {{ .Values.identities.peer.name }}-{{ .Values.orgName }}:7051
+            - name: CORE_PEER_LOCALMSPID
+              value: {{ .Values.orgName }}MSP
+            - name: CORE_PEER_MSPCONFIGPATH
+              value: {{ .Values.identities.peer.mspMountPath }}
+            - name: CORE_PEER_LISTENADDRESS
+              value: 0.0.0.0:7051
+            - name: CORE_PEER_CHAINCODELISTENADDRESS
+              value: 0.0.0.0:7052
+          ports:
+            - containerPort: 7051
+            - containerPort: 7052
+          volumeMounts:
+            - name: peer-msp
+              mountPath: {{ .Values.identities.peer.mspMountPath }}
+      volumes:
+        - name: peer-msp
+          persistentVolumeClaim:
+            claimName: {{ .Values.identities.peer.mspVolume.name }}

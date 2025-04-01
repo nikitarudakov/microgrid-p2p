@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ca-{{ .Values.orgName }}
+spec:
+  selector:
+    app: ca-{{ .Values.orgName }}
+  ports:
+    - protocol: TCP
+      port: 7054
+      targetPort: 7054
