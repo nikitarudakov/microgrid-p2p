@@ -1,8 +1,10 @@
 # Fabric CA image
 image: hyperledger/fabric-ca:1.5.15
 
-manifest:
+# Container data
+container:
   name: org1-ca
+  cluster: default.svc.cluster.local:7054
 
 # CA name
 name: 'Org1 CA'
@@ -16,3 +18,14 @@ root:
 # Bootstrap user
 user: admin
 pass: adminpw
+
+# Identities
+identities:
+  affiliation: org1
+  admin:
+    user: orgAdmin
+    secret: orgAdminpw
+  peer:
+    name: peer0
+    user: peer
+    secret: peerpw

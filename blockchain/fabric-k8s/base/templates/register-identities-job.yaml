@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: register-enroll-identities
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      containers:
+        - name: register-enroll
+          image: {{ .Values.image }}
+          command: ["sh", "-c"]
+          env:
+            - name: CA_HOST
+              value: {{ .Values.container.name }}:{{ .Values.container.cluster }}
+          args:
+            - |
+              fabric-ca-client enroll \
+                -u http://{{ .Values.user }}:{{ .Values.pass }}@${CA_HOST}
+
+              # Register and enroll org admin
+              fabric-ca-client register \
+                --id.name {{ .Values.identities.admin.user }} \
+                --id.secret {{ .Values.identities.admin.secret }} \
+                --id.type admin \
+                --id.attrs "hf.Registrar.Roles=*,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true" \
+                --id.affiliation {{ .Values.identities.affiliation }}
+
+              export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client/admin
+              fabric-ca-client enroll \
+                -u http://{{ .Values.identities.admin.user }}:{{ .Values.identities.admin.secret  }}@${CA_HOST}
+
+              # Register and enroll peer node
+              fabric-ca-client register \
+                --id.name {{ .Values.identities.peer.user }} \
+                --id.secret {{ .Values.identities.peer.secret }} \
+                --id.type peer \
+                --id.affiliation {{ .Values.identities.affiliation }}
+
+              export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client/{{ .Values.identities.peer.name }}
+              fabric-ca-client enroll \
+                -u http://{{ .Values.identities.peer.user }}:{{ .Values.identities.peer.secret }}@${CA_HOST}
+
+              echo "MSP for admin and peer enrolled successfully."
+          volumeMounts:
+            - mountPath: /etc/hyperledger/fabric-ca-client
+              name: msp-data
+      restartPolicy: Never
+      volumes:
+        - name: msp-data
+          emptyDir: {}
