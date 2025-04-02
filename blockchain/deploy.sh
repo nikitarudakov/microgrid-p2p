@@ -25,17 +25,19 @@ helm install org2-ca ./base \
   --set namespace=org2 \
   --set name=org2-ca
 
+# === Jobs ===
+echo "⏳ Waiting for 'register-enroll-identities' Job to complete in org1..."
+kubectl wait --for=condition=complete job/register-enroll-identities -n org1 --timeout=60s
+
+echo "⏳ Waiting for 'register-enroll-identities' Job to complete in org2..."
+kubectl wait --for=condition=complete job/register-enroll-identities -n org2 --timeout=60s
+
 # === Deploy Peers ===
-
-kubectl wait --for=condition=ready pod -l app=org1-ca -n org1 --timeout=60s
-
 echo "🎯 Deploying Peer0 for Org1"
 helm install peer0-org1 ./peer \
   --set namespace=org1 \
   --set peer.org=org1 \
-  --set peer.mspID=Org1MSP \
-
-kubectl wait --for=condition=ready pod -l app=org2-ca -n org2 --timeout=60s
+  --set peer.mspID=Org1MSP
 
 echo "🎯 Deploying Peer0 for Org2"
 helm install peer0-org2 ./peer \

@@ -17,8 +17,10 @@ spec:
             - sh
             - -c
             - |
-              fabric-ca-client enroll \
-                -u http://{{ .Values.user }}:{{ .Values.pass }}@${ORG_CA_HOST}
+              until fabric-ca-client enroll -u http://{{ .Values.user }}:{{ .Values.pass }}@${ORG_CA_HOST}; do
+                echo "CA not available yet, retrying..."
+                sleep 2
+              done
 
               # Register and enroll org admin
               fabric-ca-client register \
