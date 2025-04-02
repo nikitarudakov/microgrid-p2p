@@ -24,5 +24,6 @@ spec:
             - |
               fabric-ca-server start \
                 -b {{ .Values.user }}:{{ .Values.pass }} \
+                -n {{ .Values.name }} \
                 -u http://{{ .Values.root.user }}:{{ .Values.root.pass }}@{{ .Values.root.host }} \
                 -d

@@ -7,9 +7,8 @@ cluster: svc.cluster.local:7054
 container:
   name: ca
 
-
 # CA name
-name: 'Org1 CA'
+name: org1-ca
 
 # Root user
 root:

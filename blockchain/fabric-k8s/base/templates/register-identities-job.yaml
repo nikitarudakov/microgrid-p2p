@@ -3,9 +3,6 @@ kind: Job
 metadata:
   name: register-enroll-identities
   namespace: {{ .Values.namespace }}
-  annotations:
-    "helm.sh/hook": post-install
-    "helm.sh/hook-delete-policy": hook-succeeded
 spec:
   backoffLimit: 3
   template:
