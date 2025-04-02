@@ -1,36 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ca-{{ .Values.orgName }}
+  name: {{ .Values.manifest.name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ca-{{ .Values.orgName }}
+      app: {{ .Values.manifest.name }}
   template:
     metadata:
       labels:
-        app: ca-{{ .Values.orgName }}
+        app: {{ .Values.manifest.name }}
     spec:
       containers:
-        - name: ca
-          image: {{ .Values.ca.image }}
+        - name: {{ .Values.manifest.name }}
+          image: {{ .Values.image }}
+          ports:
+            - containerPort: 7054
           args:
             - sh
             - -c
             - |
               fabric-ca-server start \
-                --ca.certfile /etc/hyperledger/fabric-ca-server/ca-cert.pem \
-                --ca.keyfile /etc/hyperledger/fabric-ca-server/ca-key.pem \
-                -b {{ .Values.ca.admin.user }}:{{ .Values.ca.admin.pass }} \
-                --intermediate.parenturl {{ .Values.ca.parent.url }} \
-                --csr.cn ca-{{ .Values.orgName }} \
-                --csr.hosts ca-{{ .Values.orgName }}.fabric.svc.cluster.local
-          ports:
-            - containerPort: 7054
-          volumeMounts:
-            - mountPath: /etc/hyperledger/fabric-ca-server
-              name: ca-data
-      volumes:
-        - name: ca-data
-          emptyDir: {}
+                -b {{ .Values.user }}:{{ .Values.pass }} \
+                -u http://{{ .Values.root.user }}:{{ .Values.root.pass }}@{{ .Values.root.host }} \
+                -d

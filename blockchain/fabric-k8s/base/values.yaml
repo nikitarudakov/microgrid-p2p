@@ -1,21 +1,18 @@
-orgName: org1
+# Fabric CA image
+image: hyperledger/fabric-ca:1.5.15
 
-ca:
-  mode: intermediate
-  image: hyperledger/fabric-ca:1.5.15
-  admin:
-    user: admin
-    pass: adminpw
-  parent:
-    url: https://root-admin:rootpw@root-ca.fabric.svc.cluster.local:7054
+manifest:
+  name: org1-ca
 
-registerJob:
-  admin:
-    name: admin
-    pass: adminpw
-  peer:
-    name: peer0
-    pass: peer0pw
+# CA name
+name: 'Org1 CA'
 
-pvc:
-  size: 1Gi
+# Root user
+root:
+  host: root-ca.default.svc.cluster.local:7054
+  user: root
+  pass: rootpw
+
+# Bootstrap user
+user: admin
+pass: adminpw
