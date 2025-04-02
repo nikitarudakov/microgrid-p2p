@@ -9,11 +9,12 @@ spec:
       containers:
         - name: register-enroll
           image: {{ .Values.image }}
-          command: ["sh", "-c"]
           env:
             - name: CA_HOST
               value: {{ .Values.container.name }}:{{ .Values.container.cluster }}
           args:
+            - sh
+            - -c
             - |
               fabric-ca-client enroll \
                 -u http://{{ .Values.user }}:{{ .Values.pass }}@${CA_HOST}
@@ -48,4 +49,5 @@ spec:
       restartPolicy: Never
       volumes:
         - name: msp-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: {{ .Values.container.name }}-pvc
