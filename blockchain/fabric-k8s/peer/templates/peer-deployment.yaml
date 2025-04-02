@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.peer.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.peer.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.peer.name }}
+    spec:
+      containers:
+        - name: {{ .Values.peer.name }}
+          image: {{ .Values.image }}
+          command: ["peer", "node", "start"]
+          env:
+            - name: CORE_PEER_ID
+              value: {{ .Values.peer.name }}
+            - name: CORE_PEER_ADDRESS
+              value: '{{ .Values.peer.name }}.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.peer.ports.peer }}'
+            - name: CORE_PEER_LISTENADDRESS
+              value: '0.0.0.0:{{ .Values.peer.ports.peer }}'
+            - name: CORE_PEER_CHAINCODEADDRESS
+              value: '{{ .Values.peer.name }}.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.peer.ports.chaincode }}'
+            - name: CORE_PEER_CHAINCODELISTENADDRESS
+              value: '0.0.0.0:{{ .Values.peer.ports.chaincode }}'
+            - name: CORE_PEER_LOCALMSPID
+              value: {{ .Values.peer.mspID }}
+            - name: CORE_PEER_MSPCONFIGPATH
+              value: /etc/hyperledger/fabric/msp
+          ports:
+            - containerPort: {{ .Values.peer.ports.peer }}
+            - containerPort: {{ .Values.peer.ports.chaincode }}
+            - containerPort: {{ .Values.peer.ports.operations }}
+            - containerPort: {{ .Values.peer.ports.events }}
+          volumeMounts:
+            - mountPath: /etc/hyperledger/fabric/msp
+              subPath: {{ .Values.peer.name }}/msp
+              name: peer-msp
+      volumes:
+        - name: peer-msp
+          persistentVolumeClaim:
+            claimName: ca-pvc

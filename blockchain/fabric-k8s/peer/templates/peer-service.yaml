@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.peer.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: {{ .Values.peer.name }}
+  ports:
+    - name: peer
+      port: {{ .Values.peer.ports.peer }}
+      targetPort: {{ .Values.peer.ports.peer }}
+    - name: chaincode
+      port: {{ .Values.peer.ports.chaincode }}
+      targetPort: {{ .Values.peer.ports.chaincode }}
+    - name: events
+      port: {{ .Values.peer.ports.events }}
+      targetPort: {{ .Values.peer.ports.events }}
+    - name: operations
+      port: {{ .Values.peer.ports.operations }}
+      targetPort: {{ .Values.peer.ports.operations }}

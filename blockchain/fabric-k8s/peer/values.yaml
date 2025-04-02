@@ -1,0 +1,13 @@
+image: hyperledger/fabric-peer:3.1.0
+namespace: org1
+
+peer:
+  org: org1
+  name: peer0
+  mspID: Org1MSP
+  ports:
+    peer: 7051
+    chaincode: 7052
+    operations: 9443
+    events: 7053
+

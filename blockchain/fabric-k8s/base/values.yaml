@@ -1,10 +1,12 @@
 # Fabric CA image
 image: hyperledger/fabric-ca:1.5.15
+namespace: org1
+cluster: svc.cluster.local:7054
 
 # Container data
 container:
-  name: org1-ca
-  cluster: default.svc.cluster.local:7054
+  name: ca
+
 
 # CA name
 name: 'Org1 CA'
@@ -21,7 +23,6 @@ pass: adminpw
 
 # Identities
 identities:
-  affiliation: org1
   admin:
     user: orgAdmin
     secret: orgAdminpw

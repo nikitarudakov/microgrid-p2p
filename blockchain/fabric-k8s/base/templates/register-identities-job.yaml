@@ -2,6 +2,10 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: register-enroll-identities
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": hook-succeeded
 spec:
   backoffLimit: 3
   template:
@@ -10,14 +14,14 @@ spec:
         - name: register-enroll
           image: {{ .Values.image }}
           env:
-            - name: CA_HOST
-              value: {{ .Values.container.name }}:{{ .Values.container.cluster }}
+            - name: ORG_CA_HOST
+              value: {{ .Values.container.name }}.{{ .Values.namespace}}.{{ .Values.cluster }}
           args:
             - sh
             - -c
             - |
               fabric-ca-client enroll \
-                -u http://{{ .Values.user }}:{{ .Values.pass }}@${CA_HOST}
+                -u http://{{ .Values.user }}:{{ .Values.pass }}@${ORG_CA_HOST}
 
               # Register and enroll org admin
               fabric-ca-client register \
@@ -25,22 +29,35 @@ spec:
                 --id.secret {{ .Values.identities.admin.secret }} \
                 --id.type admin \
                 --id.attrs "hf.Registrar.Roles=*,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true" \
-                --id.affiliation {{ .Values.identities.affiliation }}
+                --id.affiliation {{ .Values.namespace }}
 
               export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client/admin
               fabric-ca-client enroll \
-                -u http://{{ .Values.identities.admin.user }}:{{ .Values.identities.admin.secret  }}@${CA_HOST}
+                -u http://{{ .Values.identities.admin.user }}:{{ .Values.identities.admin.secret }}@${ORG_CA_HOST}
 
               # Register and enroll peer node
               fabric-ca-client register \
                 --id.name {{ .Values.identities.peer.user }} \
                 --id.secret {{ .Values.identities.peer.secret }} \
                 --id.type peer \
-                --id.affiliation {{ .Values.identities.affiliation }}
+                --id.affiliation {{ .Values.namespace }}
 
               export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client/{{ .Values.identities.peer.name }}
               fabric-ca-client enroll \
-                -u http://{{ .Values.identities.peer.user }}:{{ .Values.identities.peer.secret }}@${CA_HOST}
+                -u http://{{ .Values.identities.peer.user }}:{{ .Values.identities.peer.secret }}@${ORG_CA_HOST}
+
+              cat > /etc/hyperledger/fabric-ca-client/{{ .Values.identities.peer.name }}/msp/config.yaml <<EOF
+              NodeOUs:
+                Enable: true
+                ClientOUIdentifier:
+                  OrganizationalUnitIdentifier: client
+                PeerOUIdentifier:
+                  OrganizationalUnitIdentifier: peer
+                AdminOUIdentifier:
+                  OrganizationalUnitIdentifier: admin
+                OrdererOUIdentifier:
+                  OrganizationalUnitIdentifier: orderer
+              EOF
 
               echo "MSP for admin and peer enrolled successfully."
           volumeMounts:
