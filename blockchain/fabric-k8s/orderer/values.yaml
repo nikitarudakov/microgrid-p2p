@@ -1,0 +1,6 @@
+image: hyperledger/fabric-orderer:3.1.0
+namespace: ordererOrg
+name: orderer0
+mspID: OrdererOrgMSP
+ports:
+  orderer: 7050

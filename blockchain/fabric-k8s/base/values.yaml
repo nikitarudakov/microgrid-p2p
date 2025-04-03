@@ -29,3 +29,12 @@ identities:
     name: peer0
     user: peer
     secret: peerpw
+  orderer:
+    name: orderer0
+    user: orderer
+    secret: ordererpw
+
+# Register parameters
+register:
+  includePeer: true
+  includeOrderer: false

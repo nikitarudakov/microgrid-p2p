@@ -18,6 +18,10 @@ spec:
           image: {{ .Values.image }}
           ports:
             - containerPort: 7054
+          env:
+            - name: FABRIC_CA_SERVER_AFFILIATIONS
+              value: |
+                orderer-org: []
           args:
             - sh
             - -c

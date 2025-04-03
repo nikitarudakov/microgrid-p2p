@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: {{ .Values.name }}
+          image: {{ .Values.image }}
+          command: ["orderer"]
+          env:
+            - name: ORDERER_GENERAL_LISTENADDRESS
+              value: '0.0.0.0'
+            - name: ORDERER_GENERAL_LISTENPORT
+              value: "{{ .Values.ports.orderer }}"
+            - name: ORDERER_GENERAL_LOCALMSPID
+              value: {{ .Values.mspID }}
+            - name: ORDERER_GENERAL_LOCALMSPDIR
+              value: /etc/hyperledger/fabric/msp
+            - name: ORDERER_GENERAL_TLS_ENABLED
+              value: "false" # Set to "true" if using TLS
+          ports:
+            - containerPort: {{ .Values.ports.orderer }}
+          volumeMounts:
+            - mountPath: /etc/hyperledger/fabric/msp
+              subPath: {{ .Values.name }}/msp
+              name: orderer-msp
+      volumes:
+        - name: orderer-msp
+          persistentVolumeClaim:
+            claimName: ca-pvc
