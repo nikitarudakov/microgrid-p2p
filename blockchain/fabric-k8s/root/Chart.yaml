@@ -1,5 +1,0 @@
-apiVersion: v2
-name: root-ca
-description: Flexi Root CA Deployment
-type: application
-version: 1.0.0

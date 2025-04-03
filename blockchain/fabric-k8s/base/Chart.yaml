@@ -1,5 +1,0 @@
-apiVersion: v2
-name: base
-description: Flexi Base Deployment
-type: application
-version: 1.0.0

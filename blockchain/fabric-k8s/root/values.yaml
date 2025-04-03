@@ -1,9 +1,0 @@
-# Fabric CA image
-image: hyperledger/fabric-ca:1.5.15
-
-# CA name
-name: 'Root CA'
-
-# Bootstrap user
-user: root
-pass: rootpw
