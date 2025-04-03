@@ -1,0 +1,13 @@
+name: org-ca
+namespace: org1
+image: hyperledger/fabric-ca:1.5.15
+
+tls:
+  name: tls-ca
+
+ca:
+  name: org1-ca
+
+admin:
+  user: rcaadmin
+  pass: rcaadminpw

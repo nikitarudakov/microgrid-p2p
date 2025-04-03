@@ -2,6 +2,9 @@ name: tls-ca
 namespace: org1
 image: hyperledger/fabric-ca:1.5.15
 
+ca:
+  name: tls-org1-ca
+
 admin:
   user: tlsadmin
   pass: tlsadminpw

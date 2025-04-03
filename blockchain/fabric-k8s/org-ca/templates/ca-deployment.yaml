@@ -27,12 +27,13 @@ spec:
                 -n {{ .Values.ca.name }} \
                 --csr.hosts {{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local,localhost \
                 --tls.enabled \
-                --intermediate.enrollment.profile tls \
+                --tls.certfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.admin.user }}/msp/signcerts/cert.pem \
+                --tls.keyfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.admin.user }}/msp/keystore/key.pem \
                 -d
           volumeMounts:
-            - name: ca-data
-              mountPath: /etc/hyperledger/fabric-ca-server
+            - mountPath: /etc/hyperledger/fabric-ca-client
+              name: tls-ca-client-data
       volumes:
-        - name: ca-data
+        - name: tls-ca-client-data
           persistentVolumeClaim:
-            claimName: {{ .Values.name }}-server-pvc
+            claimName: {{ .Values.tls.name }}-client-pvc

@@ -50,6 +50,13 @@ spec:
                 -d
 
               echo "Root Org CA identity was registered"
+
+              # Rename private key for easier reference in CA server
+              KEY_PATH="/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.org.boot.name }}/msp/keystore"
+
+              mv ${KEY_PATH}/* ${KEY_PATH}/key.pem
+
+              echo "Renamed TLS private key and certificate for Org CA server"
           volumeMounts:
             - mountPath: /etc/hyperledger/fabric-ca-server
               name: ca-server-root
@@ -57,7 +64,7 @@ spec:
               name: ca-client-data
       restartPolicy: Never
       volumes:
-        - name:  ca-server-root
+        - name: ca-server-root
           persistentVolumeClaim:
             claimName: {{ .Values.name }}-server-pvc
         - name: ca-client-data

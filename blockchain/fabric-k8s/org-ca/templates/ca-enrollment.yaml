@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: org-ca-enrollment
+  namespace: {{ .Values.namespace }}
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      containers:
+        - name: org-ca-enrollment
+          image: {{ .Values.image }}
+          env:
+            - name: CA_HOST
+              value: {{ .Values.name }}.{{ .Values.namespace}}.svc.cluster.local:7054
+          args:
+            - sh
+            - -c
+            - |
+              sleep 5
+
+              export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+
+              fabric-ca-client enroll \
+                -u https://{{ .Values.admin.user }}:{{ .Values.admin.pass }}@${CA_HOST} \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                --mspdir {{ .Values.name }}/{{ .Values.admin.user }}/msp \
+                -d
+
+              echo "Org CA Admin was enrolled"
+          volumeMounts:
+            - mountPath: /etc/hyperledger/fabric-ca-client
+              name: tls-ca-client-root
+      restartPolicy: Never
+      volumes:
+        - name: tls-ca-client-root
+          persistentVolumeClaim:
+            claimName: {{ .Values.tls.name }}-client-pvc
