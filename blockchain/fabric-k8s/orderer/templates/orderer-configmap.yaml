@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orderer-config
+  namespace: {{ .Values.namespace }}
+data:
+  orderer.yaml: |
+{{ .Files.Get "config/orderer-config.yaml" | indent 4 }}

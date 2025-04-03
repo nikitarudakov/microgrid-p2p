@@ -18,23 +18,53 @@ spec:
           image: {{ .Values.image }}
           command: ["orderer"]
           env:
+            - name: FABRIC_CFG_PATH
+              value: /etc/hyperledger/fabric/config
+
             - name: ORDERER_GENERAL_LISTENADDRESS
-              value: '0.0.0.0'
+              value: "0.0.0.0"
             - name: ORDERER_GENERAL_LISTENPORT
-              value: "{{ .Values.ports.orderer }}"
+              value: "7050"
+
+            - name: ORDERER_GENERAL_TLS_ENABLED
+              value: "true"
+            - name: ORDERER_GENERAL_TLS_PRIVATEKEY
+              value: /etc/hyperledger/fabric/tls/server.key
+            - name: ORDERER_GENERAL_TLS_CERTIFICATE
+              value: /etc/hyperledger/fabric/tls/server.crt
+            - name: ORDERER_GENERAL_TLS_ROOTCAS
+              value: /etc/hyperledger/fabric/tls/ca.crt
+
             - name: ORDERER_GENERAL_LOCALMSPID
-              value: {{ .Values.mspID }}
+              value: {{ .Values.msp.id }}
             - name: ORDERER_GENERAL_LOCALMSPDIR
               value: /etc/hyperledger/fabric/msp
-            - name: ORDERER_GENERAL_TLS_ENABLED
-              value: "false" # Set to "true" if using TLS
+
+            - name: ORDERER_FILELEDGER_LOCATION
+              value: /var/hyperledger/production/ledger
+
+            - name: ORDERER_CHANNELPARTICIPATION_ENABLED
+              value: "true"
+
+            - name: ORDERER_ADMIN_TLS_ENABLED
+              value: "false"
           ports:
-            - containerPort: {{ .Values.ports.orderer }}
+            - containerPort: 7050
           volumeMounts:
-            - mountPath: /etc/hyperledger/fabric/msp
-              subPath: {{ .Values.name }}/msp
-              name: orderer-msp
+            - name: org-volume
+              mountPath: /etc/hyperledger/fabric
+              subPath: {{ .Values.namespace }}/orderers/{{ .Values.name }}
+            - name: ledger-volume
+              mountPath: /var/hyperledger/production/ledger
+            - name: orderer-config
+              mountPath: /etc/hyperledger/fabric/config
       volumes:
-        - name: orderer-msp
+        - name: org-volume
           persistentVolumeClaim:
-            claimName: ca-pvc
+            claimName: {{ .Values.ca.tls.name }}-client-pvc
+        - name: ledger-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.name }}-ledger-pvc
+        - name: orderer-config
+          configMap:
+            name: orderer-config

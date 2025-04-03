@@ -8,5 +8,5 @@ spec:
     app: {{ .Values.name }}
   ports:
     - protocol: TCP
-      port: {{ .Values.ports.orderer }}
-      targetPort: {{ .Values.ports.orderer }}
+      port: 7050
+      targetPort: 7050

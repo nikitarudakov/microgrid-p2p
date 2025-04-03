@@ -21,7 +21,8 @@ spec:
             - sh
             - -c
             - |
-              sleep 5
+              sleep 10
+
               mkdir -p /etc/hyperledger/fabric-ca-client/tls-root-cert
               cp /etc/hyperledger/fabric-ca-server/ca-cert.pem /etc/hyperledger/fabric-ca-client/tls-root-cert/tls-ca-cert.pem
 

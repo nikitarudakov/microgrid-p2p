@@ -22,3 +22,9 @@ helm install orderer-ca ./org-ca --set namespace=orderer-org --set ca.name=order
 # === Jobs ===
 echo "⏳ Waiting for 'org-ca-enrollment' Job to complete in orderer-org..."
 kubectl wait --for=condition=complete job/org-ca-enrollment -n orderer-org --timeout=60s
+
+sleep 5
+
+# === Deploy Orderer ===
+echo "🔐 Deploying Orderer"
+helm install orderer0 ./orderer --set namespace=orderer-org

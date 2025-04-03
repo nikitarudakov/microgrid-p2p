@@ -2,6 +2,13 @@ name: orderer0
 namespace: orderer-org
 image: hyperledger/fabric-orderer:3.1.0
 
+port: 7050
+
+msp:
+  id: orderer0-orderer-org
+
 ca:
+  tls:
+    name: tls-ca
   name: orderer0
   pass: orderer0pw
