@@ -31,9 +31,14 @@ spec:
                 --tls.keyfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.root.user }}/msp/keystore/key.pem \
                 -d
           volumeMounts:
-            - mountPath: /etc/hyperledger/fabric-ca-client
-              name: tls-ca-client-data
+            - name: tls-ca-client-data
+              mountPath: /etc/hyperledger/fabric-ca-client
+            - name: org-ca-server-data
+              mountPath: /etc/hyperledger/fabric-ca-server
       volumes:
         - name: tls-ca-client-data
           persistentVolumeClaim:
             claimName: {{ .Values.tls.name }}-client-pvc
+        - name: org-ca-server-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.name }}-server-pvc
