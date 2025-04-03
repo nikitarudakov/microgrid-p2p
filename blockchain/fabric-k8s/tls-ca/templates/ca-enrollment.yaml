@@ -16,7 +16,7 @@ spec:
             - name: FABRIC_CA_CLIENT_HOME
               value: /etc/hyperledger/fabric-ca-client
             - name: NODE_TLSDIR
-              value: {{ .Values.namespace }}/peers/{{ .Values.node.name }}/tls
+              value: {{ .Values.namespace }}/{{ .Values.node.type}}s/{{ .Values.node.name }}/tls
           args:
             - sh
             - -c
@@ -74,15 +74,16 @@ spec:
                 --enrollment.profile tls \
                 --csr.hosts {{ .Values.node.name }}.{{ .Values.namespace }}.svc.cluster.local,localhost \
                 --tls.certfiles tls-root-cert/tls-ca-cert.pem \
-                --mspdir tls-ca/{{ .Values.node.name }}/tls \
+                --mspdir ${NODE_TLSDIR} \
                 -d
 
               echo "✅ TLS enrollment complete for '{{ .Values.node.name }}'"
 
               # Rename for easier use later
-              mv tls-ca/{{ .Values.node.name }}/tls/keystore/* tls-ca/{{ .Values.node.name }}/tls/server.key
-              mv tls-ca/{{ .Values.node.name }}/tls/signcerts/cert.pem tls-ca/{{ .Values.node.name }}/tls/server.crt
-              cp tls-root-cert/tls-ca-cert.pem tls-ca/{{ .Values.node.name }}/tls/ca.crt
+              KEY_PATH="/etc/hyperledger/fabric-ca-client/${NODE_TLSDIR}"
+              mv ${KEY_PATH}/keystore/* ${KEY_PATH}/server.key
+              mv ${KEY_PATH}/signcerts/cert.pem ${KEY_PATH}/server.crt
+              cp ${FABRIC_CA_CLIENT_HOME}/tls-root-cert/tls-ca-cert.pem ${KEY_PATH}/ca.crt
 
               echo "✅ TLS files: key, cert, and CA copied"
           volumeMounts:
