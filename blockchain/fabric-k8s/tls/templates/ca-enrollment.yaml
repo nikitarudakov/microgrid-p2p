@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tls-ca-enrollment
+  namespace: {{ .Values.namespace }}
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      containers:
+        - name: tls-ca-enrollment
+          image: {{ .Values.image }}
+          env:
+            - name: CA_HOST
+              value: {{ .Values.name }}.{{ .Values.namespace}}.svc.cluster.local:7054
+          args:
+            - sh
+            - -c
+            - |
+              export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+
+              mkdir -p /etc/hyperledger/fabric-ca-client/tls-root-cert
+              cp /etc/hyperledger/fabric-ca-server/ca-cert.pem /etc/hyperledger/fabric-ca-client/tls-root-cert/tls-ca-cert.pem
+
+              fabric-ca-client enroll \
+                -u https://{{ .Values.admin.user }}:{{ .Values.admin.pass }}@${CA_HOST} \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                --enrollment.profile tls \
+                --mspdir tls-ca/tlsadmin/msp \
+                -d
+
+              echo "TLS Admin was enrolled"
+
+              fabric-ca-client register \
+                --id.name {{ .Values.org.boot.name }} \
+                --id.secret {{ .Values.org.boot.secret }} \
+                -u https://${CA_HOST} \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                --mspdir tls-ca/tlsadmin/msp \
+                -d
+
+              echo "Org CA Bootstrap identity was registered"
+
+              fabric-ca-client enroll \
+                -u https://{{ .Values.org.boot.name }}:{{ .Values.org.boot.secret }}@${CA_HOST} \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                --enrollment.profile tls \
+                --csr.hosts *.{{ .Values.namespace }}.svc.cluster.local,localhost \
+                --mspdir tls-ca/{{ .Values.org.boot.name }}/msp \
+                -d
+
+              echo "Root Org CA identity was registered"
+          volumeMounts:
+            - mountPath: /etc/hyperledger/fabric-ca-server
+              name: ca-server-root
+            - mountPath: /etc/hyperledger/fabric-ca-client
+              name: ca-client-data
+      restartPolicy: Never
+      volumes:
+        - name:  ca-server-root
+          persistentVolumeClaim:
+            claimName: {{ .Values.name }}-server-pvc
+        - name: ca-client-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.name }}-client-pvc

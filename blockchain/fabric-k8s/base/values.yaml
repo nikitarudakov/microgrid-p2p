@@ -20,6 +20,11 @@ root:
 user: admin
 pass: adminpw
 
+# TLS User
+tls:
+  user: tlsadmin
+  pass: tlsadminpw
+
 # Identities
 identities:
   admin:
