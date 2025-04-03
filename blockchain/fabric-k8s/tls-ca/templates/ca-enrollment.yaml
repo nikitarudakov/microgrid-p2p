@@ -17,6 +17,8 @@ spec:
             - sh
             - -c
             - |
+              sleep 5
+
               export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
 
               mkdir -p /etc/hyperledger/fabric-ca-client/tls-root-cert

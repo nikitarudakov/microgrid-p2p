@@ -7,7 +7,7 @@ cd ./blockchain/fabric-k8s/
 echo "📦 Creating namespace for Orderer Org"
 kubectl create namespace orderer-org || true
 
-helm install tls-ca ./tls --set namespace=orderer-org --set ca.name=tls-orderer-ca
+helm install tls-ca ./tls-ca --set namespace=orderer-org --set ca.name=tls-orderer-ca
 
 # === Jobs ===
 echo "⏳ Waiting for 'tls-ca-enrollment' Job to complete in orderer-org..."

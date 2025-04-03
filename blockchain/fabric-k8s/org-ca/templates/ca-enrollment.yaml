@@ -13,13 +13,13 @@ spec:
           env:
             - name: CA_HOST
               value: {{ .Values.name }}.{{ .Values.namespace}}.svc.cluster.local:7054
+            - name: FABRIC_CA_CLIENT_HOME
+              value: /etc/hyperledger/fabric-ca-client
           args:
             - sh
             - -c
             - |
               sleep 5
-
-              export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
 
               fabric-ca-client enroll \
                 -u https://{{ .Values.admin.user }}:{{ .Values.admin.pass }}@${CA_HOST} \
@@ -28,6 +28,17 @@ spec:
                 -d
 
               echo "Org CA Admin was enrolled"
+
+              fabric-ca-client register \
+                -d \
+                --id.name orgadmin \
+                --id.secret orgadminpw \
+                -u https://${CA_HOST} \
+                --mspdir {{ .Values.name }}/{{ .Values.admin.user }}/msp \
+                --id.type admin \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem
+
+               echo "Org Admin was registered"
           volumeMounts:
             - mountPath: /etc/hyperledger/fabric-ca-client
               name: tls-ca-client-root
