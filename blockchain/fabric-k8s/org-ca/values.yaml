@@ -8,6 +8,11 @@ tls:
 ca:
   name: org1-ca
 
-admin:
+org:
+  admin:
+    user: orgadmin
+    pass: orgadminpw
+
+root:
   user: rcaadmin
   pass: rcaadminpw

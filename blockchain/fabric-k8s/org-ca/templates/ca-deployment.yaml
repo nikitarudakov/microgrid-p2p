@@ -23,12 +23,12 @@ spec:
             - -c
             - |
               fabric-ca-server start \
-                -b {{ .Values.admin.user }}:{{ .Values.admin.pass }} \
+                -b {{ .Values.root.user }}:{{ .Values.root.pass }} \
                 -n {{ .Values.ca.name }} \
                 --csr.hosts {{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local,localhost \
                 --tls.enabled \
-                --tls.certfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.admin.user }}/msp/signcerts/cert.pem \
-                --tls.keyfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.admin.user }}/msp/keystore/key.pem \
+                --tls.certfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.root.user }}/msp/signcerts/cert.pem \
+                --tls.keyfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.root.user }}/msp/keystore/key.pem \
                 -d
           volumeMounts:
             - mountPath: /etc/hyperledger/fabric-ca-client

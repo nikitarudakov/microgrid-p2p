@@ -22,23 +22,32 @@ spec:
               sleep 5
 
               fabric-ca-client enroll \
-                -u https://{{ .Values.admin.user }}:{{ .Values.admin.pass }}@${CA_HOST} \
+                -u https://{{ .Values.root.user }}:{{ .Values.root.pass }}@${CA_HOST} \
                 --tls.certfiles tls-root-cert/tls-ca-cert.pem \
-                --mspdir {{ .Values.name }}/{{ .Values.admin.user }}/msp \
+                --mspdir {{ .Values.name }}/{{ .Values.root.user }}/msp \
                 -d
 
               echo "Org CA Admin was enrolled"
 
               fabric-ca-client register \
                 -d \
-                --id.name orgadmin \
-                --id.secret orgadminpw \
+                --id.name {{ .Values.org.admin.user }} \
+                --id.secret {{ .Values.org.admin.pass }} \
                 -u https://${CA_HOST} \
-                --mspdir {{ .Values.name }}/{{ .Values.admin.user }}/msp \
+                --mspdir {{ .Values.name }}/{{ .Values.root.user }}/msp \
                 --id.type admin \
                 --tls.certfiles tls-root-cert/tls-ca-cert.pem
 
-               echo "Org Admin was registered"
+              echo "Org Admin was registered"
+
+              fabric-ca-client enroll \
+                -d \
+                -u https://{{ .Values.org.admin.user }}:{{ .Values.org.admin.pass }}@${CA_HOST} \
+                --mspdir {{ .Values.namespace }}/msp \
+                --csr.hosts *.{{ .Values.namespace }}.svc.cluster.local,localhost \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem
+
+              echo "Org Admin was enrolled"
           volumeMounts:
             - mountPath: /etc/hyperledger/fabric-ca-client
               name: tls-ca-client-root
