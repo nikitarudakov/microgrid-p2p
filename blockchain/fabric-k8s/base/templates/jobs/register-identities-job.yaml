@@ -1,8 +1,7 @@
-{{- if .Values.register.includeOrderer }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: register-enroll-orderer-identities
+  name: register-enroll-identities
   namespace: {{ .Values.namespace }}
 spec:
   backoffLimit: 3
@@ -18,14 +17,10 @@ spec:
             - sh
             - -c
             - |
-              echo "Crap: {{ .Values.user }}:{{ .Values.pass }}"
-
               until fabric-ca-client enroll -u http://{{ .Values.user }}:{{ .Values.pass }}@${ORG_CA_HOST}; do
                 echo "CA not available yet, retrying..."
                 sleep 2
               done
-
-              echo "Hello From Here 0"
 
               # Register and enroll org admin
               fabric-ca-client register \
@@ -33,35 +28,41 @@ spec:
                 --id.secret {{ .Values.identities.admin.secret }} \
                 --id.type admin \
                 --id.attrs "hf.Registrar.Roles=*,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true" \
-                --id.affiliation {{ .Values.namespace }}
-
-
-              echo "Hello From Here 1"
 
               export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client/admin
               fabric-ca-client enroll \
                 -u http://{{ .Values.identities.admin.user }}:{{ .Values.identities.admin.secret }}@${ORG_CA_HOST}
 
-              echo "Hello From Here 2"
+              {{- if .Values.register.includePeer }}
+              # Register and enroll peer node
+              fabric-ca-client register \
+                --id.name {{ .Values.identities.peer.user }} \
+                --id.secret {{ .Values.identities.peer.secret }} \
+                --id.type peer \
 
+              export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client/{{ .Values.identities.peer.name }}
+              fabric-ca-client enroll \
+                -u http://{{ .Values.identities.peer.user }}:{{ .Values.identities.peer.secret }}@${ORG_CA_HOST}
+
+              cp /msp-config/config.yaml /etc/hyperledger/fabric-ca-client/{{ .Values.identities.peer.name }}/msp/config.yaml
+              {{- end }}
+
+              {{- if .Values.register.includeOrderer }}
               # Register and enroll orderer node
               fabric-ca-client register \
                 --id.name {{ .Values.identities.orderer.user }} \
                 --id.secret {{ .Values.identities.orderer.secret }} \
                 --id.type orderer \
-                --id.affiliation {{ .Values.namespace }}
 
-               echo "Hello From Here 3"
 
               export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client/{{ .Values.identities.orderer.name }}
               fabric-ca-client enroll \
                 -u http://{{ .Values.identities.orderer.user }}:{{ .Values.identities.orderer.secret }}@${ORG_CA_HOST}
 
-              echo "Hello From Here 4"
-
               cp /msp-config/config.yaml /etc/hyperledger/fabric-ca-client/{{ .Values.identities.orderer.name }}/msp/config.yaml
+              {{- end }}
 
-              echo "MSP for admin, orderer enrolled successfully."
+              echo "MSP for admin, peer|orderer enrolled successfully."
           volumeMounts:
             - mountPath: /etc/hyperledger/fabric-ca-client
               name: msp-data
@@ -75,4 +76,3 @@ spec:
         - name: msp-data
           persistentVolumeClaim:
             claimName: {{ .Values.container.name }}-pvc
-{{- end }}

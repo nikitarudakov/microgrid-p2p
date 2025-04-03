@@ -38,13 +38,13 @@ helm install org2-ca ./base \
 
 # === Jobs ===
 echo "⏳ Waiting for 'register-enroll-peer-identities' Job to complete in org1..."
-kubectl wait --for=condition=complete job/register-enroll-peer-identities -n org1 --timeout=60s
+kubectl wait --for=condition=complete job/register-enroll-identities -n org1 --timeout=60s
 
 echo "⏳ Waiting for 'register-enroll-peer-identities' Job to complete in org2..."
-kubectl wait --for=condition=complete job/register-enroll-peer-identities -n org2 --timeout=60s
+kubectl wait --for=condition=complete job/register-enroll-identities -n org2 --timeout=60s
 
 echo "⏳ Waiting for 'register-enroll-orderer-identities' Job to complete in orderer-org..."
-kubectl wait --for=condition=complete job/register-enroll-orderer-identities -n orderer-org --timeout=60s
+kubectl wait --for=condition=complete job/register-enroll-identities -n orderer-org --timeout=60s
 
 # === Deploy Peers ===
 echo "🎯 Deploying Peer0 for Org1"
