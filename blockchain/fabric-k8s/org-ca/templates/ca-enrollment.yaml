@@ -15,6 +15,8 @@ spec:
               value: {{ .Values.name }}.{{ .Values.namespace}}.svc.cluster.local:7054
             - name: FABRIC_CA_CLIENT_HOME
               value: /etc/hyperledger/fabric-ca-client
+            - name: NODE_MSPDIR
+              value: {{ .Values.namespace }}/peers/{{ .Values.node.name }}/msp
           args:
             - sh
             - -c
@@ -33,6 +35,7 @@ spec:
                 -d \
                 --id.name {{ .Values.org.admin.user }} \
                 --id.secret {{ .Values.org.admin.pass }} \
+                --id.attrs "hf.Registrar.Roles=*,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,hf.AffiliationMgr=true" \
                 -u https://${CA_HOST} \
                 --mspdir {{ .Values.name }}/{{ .Values.root.user }}/msp \
                 --id.type admin \
@@ -44,15 +47,42 @@ spec:
                 -d \
                 -u https://{{ .Values.org.admin.user }}:{{ .Values.org.admin.pass }}@${CA_HOST} \
                 --mspdir {{ .Values.namespace }}/msp \
-                --csr.hosts *.{{ .Values.namespace }}.svc.cluster.local,localhost \
                 --tls.certfiles tls-root-cert/tls-ca-cert.pem
 
               echo "Org Admin was enrolled"
+
+              # Register node identity using org admin credentials
+              fabric-ca-client register \
+                --id.name {{ .Values.node.name }} \
+                --id.secret {{ .Values.node.secret }} \
+                --id.type {{ .Values.node.type }} \
+                --mspdir {{ .Values.namespace }}/msp \
+                -u https://${CA_HOST} \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                -d
+
+              echo "✅ Node '{{ .Values.node.name }}' registered with Org CA"
+
+              # Enroll node identity (generates its own certs/keys)
+              fabric-ca-client enroll \
+                -u https://{{ .Values.node.name }}:{{ .Values.node.secret }}@${CA_HOST} \
+                --mspdir ${NODE_MSPDIR} \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                -d
+
+              cp /tmp/config/config.yaml ${NODE_MSPDIR}/config.yaml
+
+              echo "✅ Node '{{ .Values.node.name }}' enrolled with Org CA"
           volumeMounts:
             - mountPath: /etc/hyperledger/fabric-ca-client
               name: tls-ca-client-root
+            - mountPath: /tmp/config
+              name: node-ou-config
       restartPolicy: Never
       volumes:
         - name: tls-ca-client-root
           persistentVolumeClaim:
             claimName: {{ .Values.tls.name }}-client-pvc
+        - name: node-ou-config
+          configMap:
+            name: node-ou-config

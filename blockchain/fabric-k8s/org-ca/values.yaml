@@ -8,6 +8,11 @@ tls:
 ca:
   name: org1-ca
 
+node:
+  type: orderer
+  name: orderer0
+  secret: orderer0pw
+
 org:
   admin:
     user: orgadmin
