@@ -13,14 +13,15 @@ spec:
           env:
             - name: CA_HOST
               value: {{ .Values.name }}.{{ .Values.namespace}}.svc.cluster.local:7054
+            - name: FABRIC_CA_CLIENT_HOME
+              value: /etc/hyperledger/fabric-ca-client
+            - name: NODE_TLSDIR
+              value: {{ .Values.namespace }}/peers/{{ .Values.node.name }}/tls
           args:
             - sh
             - -c
             - |
               sleep 5
-
-              export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
-
               mkdir -p /etc/hyperledger/fabric-ca-client/tls-root-cert
               cp /etc/hyperledger/fabric-ca-server/ca-cert.pem /etc/hyperledger/fabric-ca-client/tls-root-cert/tls-ca-cert.pem
 
@@ -30,7 +31,6 @@ spec:
                 --enrollment.profile tls \
                 --mspdir tls-ca/tlsadmin/msp \
                 -d
-
               echo "TLS Admin was enrolled"
 
               fabric-ca-client register \
@@ -40,7 +40,6 @@ spec:
                 --tls.certfiles tls-root-cert/tls-ca-cert.pem \
                 --mspdir tls-ca/tlsadmin/msp \
                 -d
-
               echo "Org CA Bootstrap identity was registered"
 
               fabric-ca-client enroll \
@@ -50,15 +49,42 @@ spec:
                 --csr.hosts *.{{ .Values.namespace }}.svc.cluster.local,localhost \
                 --mspdir tls-ca/{{ .Values.org.boot.name }}/msp \
                 -d
-
               echo "Root Org CA identity was registered"
 
               # Rename private key for easier reference in CA server
               KEY_PATH="/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.org.boot.name }}/msp/keystore"
-
               mv ${KEY_PATH}/* ${KEY_PATH}/key.pem
-
               echo "Renamed TLS private key and certificate for Org CA server"
+
+              echo "📌 Registering node with TLS CA..."
+
+              fabric-ca-client register \
+                --id.name {{ .Values.node.name }} \
+                --id.secret {{ .Values.node.secret }} \
+                --id.type {{ .Values.node.type }} \
+                -u https://${CA_HOST} \
+                --mspdir tls-ca/tlsadmin/msp \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                -d
+
+              echo "✅ Node '{{ .Values.node.name }}' registered with TLS CA"
+
+              fabric-ca-client enroll \
+                -u https://{{ .Values.node.name }}:{{ .Values.node.secret }}@${CA_HOST} \
+                --enrollment.profile tls \
+                --csr.hosts {{ .Values.node.name }}.{{ .Values.namespace }}.svc.cluster.local,localhost \
+                --tls.certfiles tls-root-cert/tls-ca-cert.pem \
+                --mspdir tls-ca/{{ .Values.node.name }}/tls \
+                -d
+
+              echo "✅ TLS enrollment complete for '{{ .Values.node.name }}'"
+
+              # Rename for easier use later
+              mv tls-ca/{{ .Values.node.name }}/tls/keystore/* tls-ca/{{ .Values.node.name }}/tls/server.key
+              mv tls-ca/{{ .Values.node.name }}/tls/signcerts/cert.pem tls-ca/{{ .Values.node.name }}/tls/server.crt
+              cp tls-root-cert/tls-ca-cert.pem tls-ca/{{ .Values.node.name }}/tls/ca.crt
+
+              echo "✅ TLS files: key, cert, and CA copied"
           volumeMounts:
             - mountPath: /etc/hyperledger/fabric-ca-server
               name: ca-server-root

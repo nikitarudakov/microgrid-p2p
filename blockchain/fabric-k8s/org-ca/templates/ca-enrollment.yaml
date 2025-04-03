@@ -16,7 +16,7 @@ spec:
             - name: FABRIC_CA_CLIENT_HOME
               value: /etc/hyperledger/fabric-ca-client
             - name: NODE_MSPDIR
-              value: {{ .Values.namespace }}/peers/{{ .Values.node.name }}/msp
+              value: {{ .Values.namespace }}/{{ .Values.node.type}}s/{{ .Values.node.name }}/msp
           args:
             - sh
             - -c

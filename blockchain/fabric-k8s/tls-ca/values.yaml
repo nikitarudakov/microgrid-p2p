@@ -9,6 +9,11 @@ admin:
   user: tlsadmin
   pass: tlsadminpw
 
+node:
+  type: orderer
+  name: orderer0
+  secret: orderer0pw
+
 org:
   boot:
     name: rcaadmin
