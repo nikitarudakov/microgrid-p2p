@@ -71,6 +71,7 @@ spec:
                 -d
 
               cp /tmp/config/config.yaml ${FABRIC_CA_CLIENT_HOME}/${NODE_MSPDIR}/config.yaml
+              cp /tmp/config/config.yaml ${FABRIC_CA_CLIENT_HOME}/{{ .Values.namespace }}/msp/config.yaml
 
               echo "✅ Node '{{ .Values.node.name }}' enrolled with Org CA"
           volumeMounts:
