@@ -1,13 +1,13 @@
-image: hyperledger/fabric-peer:3.1.0
+name: peer0
 namespace: org1
+image: hyperledger/fabric-peer:3.1.0
 
-peer:
-  org: org1
+msp:
+  id: peer0-org1
+
+ca:
+  tls:
+    name: tls-ca
   name: peer0
-  mspID: Org1MSP
-  ports:
-    peer: 7051
-    chaincode: 7052
-    operations: 9443
-    events: 7053
+  pass: peer0pw
 

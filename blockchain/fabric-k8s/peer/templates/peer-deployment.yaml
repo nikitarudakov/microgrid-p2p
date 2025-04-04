@@ -1,47 +1,77 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.peer.name }}
+  name: {{ .Values.name }}
   namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.peer.name }}
+      app: {{ .Values.name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.peer.name }}
+        app: {{ .Values.name }}
     spec:
       containers:
-        - name: {{ .Values.peer.name }}
+        - name: {{ .Values.name }}
           image: {{ .Values.image }}
           command: ["peer", "node", "start"]
           env:
+            - name: FABRIC_CFG_PATH
+              value: /etc/hyperledger/fabric/config
+
             - name: CORE_PEER_ID
-              value: {{ .Values.peer.name }}
-            - name: CORE_PEER_ADDRESS
-              value: '{{ .Values.peer.name }}.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.peer.ports.peer }}'
+              value: {{ .Values.name }}
+            - name: CORE_PEER_NETWORKID
+              value: {{ .Values.namespace }}
             - name: CORE_PEER_LISTENADDRESS
-              value: '0.0.0.0:{{ .Values.peer.ports.peer }}'
-            - name: CORE_PEER_CHAINCODEADDRESS
-              value: '{{ .Values.peer.name }}.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.peer.ports.chaincode }}'
+              value: 0.0.0.0:7051
+            - name: CORE_PEER_ADDRESS
+              value: {{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local:7051
             - name: CORE_PEER_CHAINCODELISTENADDRESS
-              value: '0.0.0.0:{{ .Values.peer.ports.chaincode }}'
-            - name: CORE_PEER_LOCALMSPID
-              value: {{ .Values.peer.mspID }}
+              value: 0.0.0.0:7052
+            - name: CORE_PEER_CHAINCODEADDRESS
+              value: {{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local:7052
+
             - name: CORE_PEER_MSPCONFIGPATH
               value: /etc/hyperledger/fabric/msp
+            - name: CORE_PEER_LOCALMSPID
+              value: {{ .Values.msp.id }}
+
+            - name: CORE_PEER_FILESYSTEMPATH
+              value: /var/hyperledger/production
+
+            # TLS Configuration
+            - name: CORE_PEER_TLS_ENABLED
+              value: "true"
+            - name: CORE_PEER_TLS_CERT_FILE
+              value: /etc/hyperledger/fabric/tls/server.crt
+            - name: CORE_PEER_TLS_KEY_FILE
+              value: /etc/hyperledger/fabric/tls/server.key
+            - name: CORE_PEER_TLS_ROOTCERT_FILE
+              value: /etc/hyperledger/fabric/tls/ca.crt
+
           ports:
-            - containerPort: {{ .Values.peer.ports.peer }}
-            - containerPort: {{ .Values.peer.ports.chaincode }}
-            - containerPort: {{ .Values.peer.ports.operations }}
-            - containerPort: {{ .Values.peer.ports.events }}
+            - containerPort: 7051
+            - containerPort: 7052
+
           volumeMounts:
-            - mountPath: /etc/hyperledger/fabric/msp
-              subPath: {{ .Values.peer.name }}/msp
-              name: peer-msp
+            - name: org-volume
+              mountPath: /etc/hyperledger/fabric
+              subPath: {{ .Values.namespace }}/peers/{{ .Values.name }}
+            - name: peer-ledger-volume
+              mountPath: /var/hyperledger/production
+            - name: core-config
+              mountPath: /etc/hyperledger/fabric/config
+
       volumes:
-        - name: peer-msp
+        - name: org-volume
           persistentVolumeClaim:
-            claimName: ca-pvc
+            claimName: {{ .Values.ca.tls.name }}-client-pvc
+        - name: peer-ledger-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.name }}-ledger-pvc
+        - name: core-config
+          configMap:
+            name: core-config
