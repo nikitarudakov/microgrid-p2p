@@ -1,0 +1,4 @@
+namespace: org1
+
+org-subchart:
+  enabled: false

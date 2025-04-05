@@ -13,11 +13,21 @@ spec:
       labels:
         app: {{ .Values.name }}
     spec:
+      initContainers:
+        - name: init-subpath
+          image: busybox
+          command: [ "sh", "-c", "mkdir -p /data/organizations/{{ .Values.namespace}}.svc.cluster.local" ]
+          volumeMounts:
+            - name: ca-data
+              mountPath: /data
       containers:
         - name: {{ .Values.name }}
           image: {{ .Values.image }}
           ports:
             - containerPort: 7054
+          env:
+            - name: FABRIC_CA_HOME
+              value: /etc/hyperledger/fabric-ca-server/organizations/fabric-ca/{{ .Values.namespace }}/tls
           args:
             - sh
             - -c
@@ -35,4 +45,4 @@ spec:
       volumes:
         - name: ca-data
           persistentVolumeClaim:
-            claimName: {{ .Values.name }}-server-pvc
+            claimName: ca-pvc
