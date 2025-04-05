@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: nfs-server
+  template:
+    metadata:
+      labels:
+        role: nfs-server
+    spec:
+      containers:
+        - name: nfs-server
+          image: erichough/nfs-server
+          env:
+            - name: NFS_EXPORT_0
+              value: "/exports *(rw,sync,no_subtree_check,no_auth_nlm,insecure,fsid=0)"
+          ports:
+            - name: nfs
+              containerPort: 2049
+            - name: mountd
+              containerPort: 20048
+            - name: rpcbind
+              containerPort: 111
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /exports
+              name: flexipvc
+      volumes:
+        - name: flexipvc
+          persistentVolumeClaim:
+            claimName: nfs-pv-provisioning-flexi
