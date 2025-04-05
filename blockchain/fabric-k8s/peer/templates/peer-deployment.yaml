@@ -57,18 +57,17 @@ spec:
             - containerPort: 7052
 
           volumeMounts:
-            - name: org-volume
+            - name: ca-data
               mountPath: /etc/hyperledger/fabric
-              subPath: {{ .Values.namespace }}/peers/{{ .Values.name }}
+              subPath: organizations/{{ .Values.org.address }}/peers/{{ .Values.name }}.{{ .Values.org.address }}
             - name: peer-ledger-volume
               mountPath: /var/hyperledger/production
             - name: core-config
               mountPath: /etc/hyperledger/fabric/config
-
       volumes:
-        - name: org-volume
+        - name: ca-data
           persistentVolumeClaim:
-            claimName: {{ .Values.ca.tls.name }}-client-pvc
+            claimName: ca-pvc
         - name: peer-ledger-volume
           persistentVolumeClaim:
             claimName: {{ .Values.name }}-ledger-pvc

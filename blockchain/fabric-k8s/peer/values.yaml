@@ -5,6 +5,9 @@ image: hyperledger/fabric-peer:3.1.0
 msp:
   id: peer0-org1
 
+org:
+  address: org1.svc.cluster.local
+
 ca:
   tls:
     name: tls-ca

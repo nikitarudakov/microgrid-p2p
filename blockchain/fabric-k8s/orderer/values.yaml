@@ -1,11 +1,14 @@
 name: orderer0
-namespace: orderer-org
+namespace: org1
 image: hyperledger/fabric-orderer:3.1.0
 
 port: 7050
 
+org:
+  address: org1.svc.cluster.local
+
 msp:
-  id: orderer0-orderer-org
+  id: orderer0-org1
 
 ca:
   tls:
