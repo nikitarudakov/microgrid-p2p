@@ -13,13 +13,22 @@ spec:
             - name: ORG_DOMAIN
               value: {{ .Values.namespace}}.svc.cluster.local
             - name: FABRIC_CA_CLIENT_HOME
-              value: /etc/hyperledger/fabric-ca-client
+              value: /etc/hyperledger/fabric-ca-client/organizations/{{ .Values.namespace }}.svc.cluster.local
             - name: FABRIC_CA_HOME
               value: /etc/hyperledger/fabric-ca-server
           args:
             - sh
             - -c
             - |
+              clean_msp() {
+                local msp_dir=$1
+                echo "🧹 Cleaning MSP at $msp_dir"
+
+                rm -rf ${msp_dir}/keystore/*
+                rm -rf ${msp_dir}/signcerts/*
+                rm -rf ${msp_dir}/tlscacerts/*
+              }
+
               export CA_HOST="{{ .Values.name }}.${ORG_DOMAIN}:7054"
               export NODE_MSPDIR="{{ .Values.node.type}}s/{{ .Values.node.name }}.${ORG_DOMAIN}/tls"
 
@@ -27,6 +36,7 @@ spec:
               sleep 10
 
               # Admin enrollment
+              clean_msp "${FABRIC_CA_CLIENT_HOME}/tlsca/{{ .Values.admin.user }}/msp"
               fabric-ca-client enroll \
                 -u "https://{{ .Values.admin.user }}:{{ .Values.admin.pass }}@${CA_HOST}" \
                 --tls.certfiles "${FABRIC_CA_HOME}/ca-cert.pem" \
@@ -44,6 +54,7 @@ spec:
                 -d
 
               # Enroll Org bootstrap identity
+              clean_msp "${FABRIC_CA_CLIENT_HOME}/tlsca/{{ .Values.org.boot.name }}/msp"
               fabric-ca-client enroll \
                 -u "https://{{ .Values.org.boot.name }}:{{ .Values.org.boot.secret }}@${CA_HOST}" \
                 --tls.certfiles "${FABRIC_CA_HOME}/ca-cert.pem" \
@@ -67,6 +78,7 @@ spec:
                 -d
 
               # Enroll node
+              clean_msp "${FABRIC_CA_CLIENT_HOME}/${NODE_MSPDIR}"
               fabric-ca-client enroll \
                 -u "https://{{ .Values.node.name }}:{{ .Values.node.secret }}@${CA_HOST}" \
                 --enrollment.profile tls \
@@ -91,7 +103,6 @@ spec:
               subPath: organizations/fabric-ca/{{ .Values.namespace }}/tls
             - name: ca-data
               mountPath: /etc/hyperledger/fabric-ca-client
-              subPath: organizations/{{ .Values.namespace }}.svc.cluster.local
       restartPolicy: Never
       volumes:
         - name: ca-data

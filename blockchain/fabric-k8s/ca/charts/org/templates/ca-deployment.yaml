@@ -18,27 +18,35 @@ spec:
           image: {{ .Values.image }}
           ports:
             - containerPort: 7054
+          env:
+            - name: FABRIC_CA_HOME
+              value: /etc/hyperledger/fabric-ca-server/organizations/fabric-ca/{{ .Values.namespace }}/org-ca
           args:
             - sh
             - -c
             - |
+              echo "🔁 Waiting for TLS key to be available..."
+                while [ ! -f /etc/hyperledger/fabric-ca-client/keystore/key.pem ]; do
+                echo "⏳ key.pem not found, sleeping 2s..."
+                sleep 2
+                done
+              echo "✅ key.pem found, starting Fabric CA server"
+
               fabric-ca-server start \
                 -b {{ .Values.root.user }}:{{ .Values.root.pass }} \
                 -n {{ .Values.ca.name }} \
                 --csr.hosts {{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local,localhost \
                 --tls.enabled \
-                --tls.certfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.root.user }}/msp/signcerts/cert.pem \
-                --tls.keyfile=/etc/hyperledger/fabric-ca-client/tls-ca/{{ .Values.root.user }}/msp/keystore/key.pem \
+                --tls.certfile=/etc/hyperledger/fabric-ca-client/signcerts/cert.pem \
+                --tls.keyfile=/etc/hyperledger/fabric-ca-client/keystore/key.pem \
                 -d
           volumeMounts:
-            - name: tls-ca-client-data
+            - name: ca-data
               mountPath: /etc/hyperledger/fabric-ca-client
-            - name: org-ca-server-data
+              subPath: organizations/{{ .Values.namespace }}.svc.cluster.local/tlsca/{{ .Values.root.user }}/msp
+            - name: ca-data
               mountPath: /etc/hyperledger/fabric-ca-server
       volumes:
-        - name: tls-ca-client-data
+        - name: ca-data
           persistentVolumeClaim:
-            claimName: {{ .Values.tls.name }}-client-pvc
-        - name: org-ca-server-data
-          persistentVolumeClaim:
-            claimName: {{ .Values.name }}-server-pvc
+            claimName: ca-pvc
