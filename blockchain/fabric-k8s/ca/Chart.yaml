@@ -1,0 +1,5 @@
+apiVersion: v2
+name: ca
+description: Flexi CAs Deployment
+type: application
+version: 1.0.0
