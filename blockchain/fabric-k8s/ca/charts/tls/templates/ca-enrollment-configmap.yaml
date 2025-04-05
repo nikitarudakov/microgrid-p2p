@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tls-ca-enrollment-scripts
+  namespace: {{ .Values.namespace }}
+data:
+  tls-org-ca-enroll.sh: |
+    {{ tpl (.Files.Get "scripts/default-org-tls-enroll.sh") . | nindent 4 }}
