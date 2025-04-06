@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tls-ca
+  namespace: admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tls-ca
+  template:
+    metadata:
+      labels:
+        app: tls-ca
+    spec:
+      initContainers:
+        - name: init-subpath
+          image: busybox
+          command: [ "sh", "-c", "mkdir -p /data/admin-client" ]
+          volumeMounts:
+            - name: ca-data
+              mountPath: /data
+      containers:
+        - name: {{ .Values.name }}
+          image: {{ .Values.image }}
+          ports:
+            - containerPort: 7054
+          env:
+            - name: FABRIC_CA_HOME
+              value: /etc/hyperledger/fabric-ca-server/admin-tls-ca
+          args:
+            - sh
+            - -c
+            - |
+              fabric-ca-server start \
+                -b {{ .Values.admin.user }}:{{ .Values.admin.pass }} \
+                -n {{ .Values.ca.name }} \
+                --csr.hosts {{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local,localhost \
+                --tls.enabled \
+                --intermediate.enrollment.profile tls \
+                -d
+          volumeMounts:
+            - name: ca-data
+              mountPath: /etc/hyperledger/fabric-ca-server
+      volumes:
+        - name: ca-data
+          persistentVolumeClaim:
+            claimName: ca-pvc

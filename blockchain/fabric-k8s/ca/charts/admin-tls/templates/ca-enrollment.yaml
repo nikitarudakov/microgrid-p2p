@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tls-ca-enrollment
+  namespace: {{ .Values.namespace }}
+spec:
+  template:
+    spec:
+      containers:
+        - name: tls-ca-enrollment
+          image: {{ .Values.image }}
+          env:
+            - name: ORG_DOMAIN
+              value: {{ .Values.namespace}}.svc.cluster.local
+            - name: FABRIC_CA_CLIENT_HOME
+              value: /etc/hyperledger/fabric-ca-client/admin-client
+            - name: FABRIC_CA_HOME
+              value: /etc/hyperledger/fabric-ca-server
+          command: [ "sh", "/tmp/enrollment/tls-admin-ca-enroll.sh" ]
+          volumeMounts:
+            - name: ca-data
+              mountPath: /etc/hyperledger/fabric-ca-server
+              subPath: admin-tls-ca/
+            - name: ca-data
+              mountPath: /etc/hyperledger/fabric-ca-client
+            - name: enrollment
+              mountPath: /tmp/enrollment
+      restartPolicy: Never
+      volumes:
+        - name: ca-data
+          persistentVolumeClaim:
+            claimName: ca-pvc
+        - name: enrollment
+          configMap:
+            name: tls-ca-enrollment-scripts
+            defaultMode: 0775

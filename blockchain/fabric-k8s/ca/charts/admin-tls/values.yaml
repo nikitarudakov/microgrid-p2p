@@ -1,0 +1,15 @@
+name: tls-ca
+namespace: admin
+image: hyperledger/fabric-ca:1.5.15
+
+admin:
+  user: admin
+  pass: adminpw
+
+client:
+  name: adminclient
+  secret: adminclientpw
+
+ca:
+  name: admin-tls-ca
+

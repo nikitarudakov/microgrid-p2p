@@ -1,0 +1,5 @@
+apiVersion: v2
+name: admin-ca
+description: Flexi Admin CA Deployment
+type: application
+version: 1.0.0
