@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: channel-config
+  namespace: {{ .Values.namespace }}
+data:
+  configtx.yaml: |
+{{ .Files.Get "config/configtx-config.yaml" | indent 4 }}

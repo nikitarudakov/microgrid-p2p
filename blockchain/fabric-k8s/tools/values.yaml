@@ -1,0 +1,3 @@
+name: admin-tools
+image: hyperledger/fabric-tools:2.5.12
+namespace: admin

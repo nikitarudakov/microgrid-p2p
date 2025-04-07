@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      containers:
+        - name: fabric-tools
+          image: {{ .Values.image }}
+          command: [ "sh", "-c", "--" ]
+          args:
+            - |
+              echo "🔧 Fabric tools container started. Use kubectl exec to run CLI commands.";
+              sleep infinity
+          env:
+            - name: FABRIC_CFG_PATH
+              value: /etc/hyperledger/fabric/config
+          volumeMounts:
+            - name: ca-data
+              mountPath: /etc/hyperledger/fabric/organizations
+              subPath: organizations
+            - name: ca-data
+              mountPath: /etc/hyperledger/fabric/admin-client
+              subPath: admin-client
+            - name: channel-config
+              mountPath: /etc/hyperledger/fabric/config
+      volumes:
+        - name: ca-data
+          persistentVolumeClaim:
+            claimName: ca-pvc
+        - name: channel-config
+          configMap:
+            name: channel-config
