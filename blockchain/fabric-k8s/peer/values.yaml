@@ -3,7 +3,7 @@ namespace: org1
 image: hyperledger/fabric-peer:3.1.0
 
 msp:
-  id: peer0-org1
+  id: Org1MSP
 
 org:
   address: org1.svc.cluster.local

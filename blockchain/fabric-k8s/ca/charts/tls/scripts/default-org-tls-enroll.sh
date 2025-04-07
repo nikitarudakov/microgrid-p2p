@@ -67,12 +67,15 @@ fabric-ca-client enroll \
   --mspdir "${NODE_MSPDIR}" \
   -d
 
-echo "⏳ Waiting for Nodes Private Key to become ready..."
-sleep 5
-
 # Rename node key and certs
 KEY_PATH="${FABRIC_CA_CLIENT_HOME}/${NODE_MSPDIR}"
-mv ${KEY_PATH}/keystore/* "${KEY_PATH}/server.key"
+echo "⏳ Waiting for Node Private Key to appear..."
+while [ -z "$(ls -A ${KEY_PATH}/keystore 2>/dev/null)" ]; do
+  echo "🔁 Still waiting for private key in ${KEY_PATH}/keystore..."
+  sleep 1
+done
+
+mv ${KEY_PATH}/keystore/*_sk "${KEY_PATH}/server.key"
 mv ${KEY_PATH}/signcerts/cert.pem "${KEY_PATH}/server.crt"
 cp "${FABRIC_CA_HOME}/ca-cert.pem" "${KEY_PATH}/ca.crt"
 

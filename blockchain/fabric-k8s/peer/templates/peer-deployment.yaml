@@ -35,7 +35,7 @@ spec:
               value: {{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local:7052
 
             - name: CORE_PEER_MSPCONFIGPATH
-              value: /etc/hyperledger/fabric/msp
+              value: /etc/hyperledger/fabric/node/msp
             - name: CORE_PEER_LOCALMSPID
               value: {{ .Values.msp.id }}
 
@@ -46,11 +46,11 @@ spec:
             - name: CORE_PEER_TLS_ENABLED
               value: "true"
             - name: CORE_PEER_TLS_CERT_FILE
-              value: /etc/hyperledger/fabric/tls/server.crt
+              value: /etc/hyperledger/fabric/node/tls/server.crt
             - name: CORE_PEER_TLS_KEY_FILE
-              value: /etc/hyperledger/fabric/tls/server.key
+              value: /etc/hyperledger/fabric/node/tls/server.key
             - name: CORE_PEER_TLS_ROOTCERT_FILE
-              value: /etc/hyperledger/fabric/tls/ca.crt
+              value: /etc/hyperledger/fabric/node/tls/ca.crt
 
           ports:
             - containerPort: 7051
@@ -58,7 +58,7 @@ spec:
 
           volumeMounts:
             - name: ca-data
-              mountPath: /etc/hyperledger/fabric
+              mountPath: /etc/hyperledger/fabric/node
               subPath: organizations/{{ .Values.org.address }}/peers/{{ .Values.name }}.{{ .Values.org.address }}
             - name: peer-ledger-volume
               mountPath: /var/hyperledger/production

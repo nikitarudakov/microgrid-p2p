@@ -1,48 +1,56 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status.
+# Exit immediately on any error
 set -e
 
-# Accept org name as the first argument, default to "org1" if not provided
-ORG_NAME="${1:-org1}"
+# === Set Namespace/Org from Argument ===
+NAMESPACE=${1:-org1}
+echo "📦 Using namespace: $NAMESPACE"
 
-# Navigate to the Helm chart directory
-cd ./blockchain/fabric-k8s/
+# === Navigate to Helm Chart Directory ===
+cd ./blockchain/fabric-k8s/ || exit 1
+
+# === Create Namespace ===
+echo "📦 Creating namespace $NAMESPACE"
+kubectl create namespace "$NAMESPACE" || true
+
+# === Deploy Persistence PVC ===
+echo "📁 Installing persistence chart"
+helm install "$NAMESPACE-persistence" ./ca/charts/persistence --set namespace="$NAMESPACE"
+
+# === Wait for PVC to be Bound ===
+echo "⏳ Waiting for PVC to be bound..."
+PVC_NAME=$(kubectl get pvc -n "$NAMESPACE" -o jsonpath='{.items[0].metadata.name}')
+kubectl wait --for=jsonpath='{.status.phase}'=Bound pvc/"$PVC_NAME" -n "$NAMESPACE" --timeout=60s
 
 # === Deploy TLS CA ===
-echo "📦 Creating namespace for ${ORG_NAME}"
-kubectl create namespace "${ORG_NAME}" || true
-
-helm install tls-peer-${ORG_NAME}-ca ./tls-ca \
-  --set namespace="${ORG_NAME}" \
-  --set ca.name="tls-${ORG_NAME}-ca" \
+echo "🔐 Installing TLS CA"
+helm install "$NAMESPACE-tls-ca" ./ca/charts/tls \
+  --set namespace="$NAMESPACE" \
+  --set ca.name="tls-${NAMESPACE}-ca" \
   --set node.type=peer \
   --set node.name=peer0 \
   --set node.secret=peer0pw
 
-# === Jobs ===
-echo "⏳ Waiting for 'tls-ca-enrollment' Job to complete in ${ORG_NAME}..."
-kubectl wait --for=condition=complete job/tls-ca-enrollment -n "${ORG_NAME}" --timeout=60s
-
-sleep 5
+# === Wait for TLS CA Enrollment Job ===
+echo "⏳ Waiting for 'tls-ca-enrollment' Job to complete in $NAMESPACE..."
+kubectl wait --for=condition=complete job/tls-ca-enrollment -n "$NAMESPACE" --timeout=60s
 
 # === Deploy Org CA ===
-echo "🔐 Deploying Org CA"
-helm install "${ORG_NAME}-ca" ./org-ca \
-  --set namespace="${ORG_NAME}" \
-  --set ca.name="${ORG_NAME}-ca" \
+echo "🔐 Installing Org CA"
+helm install "$NAMESPACE-org-ca" ./ca/charts/org \
+  --set namespace="$NAMESPACE" \
+  --set ca.name="${NAMESPACE}-ca" \
   --set node.type=peer \
   --set node.name=peer0 \
   --set node.secret=peer0pw
 
-# === Jobs ===
-echo "⏳ Waiting for 'org-ca-enrollment' Job to complete in ${ORG_NAME}..."
-kubectl wait --for=condition=complete job/org-ca-enrollment -n "${ORG_NAME}" --timeout=60s
-
-sleep 5
+# === Wait for Org CA Enrollment Job ===
+echo "⏳ Waiting for 'org-ca-enrollment' Job to complete in $NAMESPACE..."
+kubectl wait --for=condition=complete job/org-ca-enrollment -n "$NAMESPACE" --timeout=60s
 
 # === Deploy Peer ===
-echo "🔐 Deploying Peer"
-helm install ${ORG_NAME}-peer0 ./peer \
-  --set namespace="${ORG_NAME}" \
-  --set msp.id="peer0-${ORG_NAME}"
+echo "📦 Deploying Peer"
+helm install "$NAMESPACE-peer0" ./peer \
+  --set namespace="$NAMESPACE" \
+  --set msp.id="${NAMESPACE}MSP"

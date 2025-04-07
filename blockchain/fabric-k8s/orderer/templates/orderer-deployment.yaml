@@ -24,21 +24,24 @@ spec:
             - name: ORDERER_GENERAL_LISTENADDRESS
               value: "0.0.0.0"
             - name: ORDERER_GENERAL_LISTENPORT
-              value: "7050"
+              value: "{{ .Values.ports.listen }}"
 
             - name: ORDERER_GENERAL_TLS_ENABLED
               value: "true"
             - name: ORDERER_GENERAL_TLS_PRIVATEKEY
-              value: /etc/hyperledger/fabric/tls/server.key
+              value: /etc/hyperledger/fabric/node/tls/server.key
             - name: ORDERER_GENERAL_TLS_CERTIFICATE
-              value: /etc/hyperledger/fabric/tls/server.crt
+              value: /etc/hyperledger/fabric/node/tls/server.crt
             - name: ORDERER_GENERAL_TLS_ROOTCAS
-              value: /etc/hyperledger/fabric/tls/ca.crt
+              value: /etc/hyperledger/fabric/node/tls/ca.crt
 
             - name: ORDERER_GENERAL_LOCALMSPID
               value: {{ .Values.msp.id }}
             - name: ORDERER_GENERAL_LOCALMSPDIR
-              value: /etc/hyperledger/fabric/msp
+              value: /etc/hyperledger/fabric/node/msp
+
+            - name: ORDERER_GENERAL_BOOTSTRAPMETHOD
+              value: "none"
 
             - name: ORDERER_FILELEDGER_LOCATION
               value: /var/hyperledger/production/ledger
@@ -46,14 +49,29 @@ spec:
             - name: ORDERER_CHANNELPARTICIPATION_ENABLED
               value: "true"
 
+            - name: ORDERER_ADMIN_LISTENADDRESS
+              value: "0.0.0.0:{{ .Values.ports.admin }}"
+
             - name: ORDERER_ADMIN_TLS_ENABLED
-              value: "false"
+              value: "true"
+            - name: ORDERER_ADMIN_TLS_CERTIFICATE
+              value: /etc/hyperledger/fabric/admin-client/client-tls-cert.pem
+            - name: ORDERER_ADMIN_TLS_PRIVATEKEY
+              value: /etc/hyperledger/fabric/admin-client/client-tls-key.pem
+            - name: ORDERER_ADMIN_TLS_CLIENTAUTHREQUIRED
+              value: "true"
+            - name: ORDERER_ADMIN_TLS_CLIENTROOTCAS
+              value: /etc/hyperledger/fabric/admin-client/client-tls-ca-cert.pem
           ports:
-            - containerPort: 7050
+            - containerPort: {{ .Values.ports.listen }}
+            - containerPort: {{ .Values.ports.admin }}
           volumeMounts:
             - name: ca-data
-              mountPath: /etc/hyperledger/fabric
+              mountPath: /etc/hyperledger/fabric/node
               subPath: organizations/{{ .Values.org.address }}/orderers/{{ .Values.name }}.{{ .Values.org.address }}
+            - name: ca-data
+              mountPath: /etc/hyperledger/fabric/admin-client
+              subPath: admin-client/
             - name: ledger-volume
               mountPath: /var/hyperledger/production/ledger
             - name: orderer-config
