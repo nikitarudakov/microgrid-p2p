@@ -55,9 +55,9 @@ spec:
             - name: ORDERER_ADMIN_TLS_ENABLED
               value: "true"
             - name: ORDERER_ADMIN_TLS_CERTIFICATE
-              value: /etc/hyperledger/fabric/admin-client/client-tls-cert.pem
+              value: /etc/hyperledger/fabric/node/tls/server.crt
             - name: ORDERER_ADMIN_TLS_PRIVATEKEY
-              value: /etc/hyperledger/fabric/admin-client/client-tls-key.pem
+              value: /etc/hyperledger/fabric/node/tls/server.key
             - name: ORDERER_ADMIN_TLS_CLIENTAUTHREQUIRED
               value: "true"
             - name: ORDERER_ADMIN_TLS_CLIENTROOTCAS

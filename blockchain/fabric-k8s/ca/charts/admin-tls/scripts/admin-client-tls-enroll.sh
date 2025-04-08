@@ -9,6 +9,8 @@ clean_msp() {
   rm -rf ${msp_dir}/tlscacerts/*
 }
 
+rm -rf admin-client
+
 export CA_HOST="{{ .Values.name }}.${ORG_DOMAIN}:7054"
 export NODE_MSPDIR="tls"
 
@@ -39,7 +41,7 @@ clean_msp "${FABRIC_CA_CLIENT_HOME}/${NODE_MSPDIR}"
 fabric-ca-client enroll \
   -u "https://{{ .Values.client.name }}:{{ .Values.client.secret }}@${CA_HOST}" \
   --enrollment.profile tls \
-  --csr.hosts "{{ .Values.name }}.{{ .Values.namespace }}.svc.cluster.local,localhost" \
+  --csr.hosts "admin-tools.{{ .Values.namespace }}.svc.cluster.local,localhost" \
   --tls.certfiles "${FABRIC_CA_HOME}/ca-cert.pem" \
   --mspdir "${NODE_MSPDIR}" \
   -d
@@ -49,7 +51,13 @@ sleep 5
 
 # Rename node key and certs
 KEY_PATH="${FABRIC_CA_CLIENT_HOME}/${NODE_MSPDIR}"
-mv ${KEY_PATH}/keystore/* "${FABRIC_CA_CLIENT_HOME}/client-tls-key.pem"
+echo "⏳ Waiting for Node Private Key to appear..."
+while [ -z "$(ls -A ${KEY_PATH}/keystore 2>/dev/null)" ]; do
+  echo "🔁 Still waiting for private key in ${KEY_PATH}/keystore..."
+  sleep 1
+done
+
+mv ${KEY_PATH}/keystore/*_sk "${FABRIC_CA_CLIENT_HOME}/client-tls-key.pem"
 mv ${KEY_PATH}/signcerts/cert.pem "${FABRIC_CA_CLIENT_HOME}/client-tls-cert.pem"
 cp "${FABRIC_CA_HOME}/ca-cert.pem" "${FABRIC_CA_CLIENT_HOME}/client-tls-ca-cert.pem"
 
