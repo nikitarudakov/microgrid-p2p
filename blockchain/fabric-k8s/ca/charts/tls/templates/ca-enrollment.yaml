@@ -32,5 +32,5 @@ spec:
             claimName: ca-pvc
         - name: enrollment
           configMap:
-            name: tls-ca-enrollment-scripts
+            name: tls-org-ca-enrollment-scripts
             defaultMode: 0775

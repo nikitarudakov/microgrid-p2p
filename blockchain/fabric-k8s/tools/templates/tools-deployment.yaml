@@ -1,27 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.name }}
-  namespace: {{ .Values.namespace }}
+  name: admin-tools
+  namespace: admin
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.name }}
+      app: admin-tools
   template:
     metadata:
       labels:
-        app: {{ .Values.name }}
+        app: admin-tools
     spec:
       containers:
-        - name: fabric-tools
-          image: {{ .Values.image }}
-          command: [ "sh", "-c", "--" ]
+        - name: cli
+          image: ubuntu:22.04
+          command: ["sh", "-c", "--"]
           args:
             - |
-              echo "🔧 Fabric tools container started. Use kubectl exec to run CLI commands.";
+              mkdir -p /opt/fabric && cd /opt/fabric && \
+              apt update && \
+              apt install -y curl unzip ca-certificates bash && \
+              curl -sSL https://github.com/hyperledger/fabric/releases/download/v3.1.0/hyperledger-fabric-linux-amd64-3.1.0.tar.gz | tar xz && \
+              echo "🧰 Fabric CLI tools are ready! Use kubectl exec to run them."
+
+              cp /etc/hyperledger/fabric/config/createJoin.sh /etc/hyperledger/fabric/createJoin.sh
+
               sleep infinity
           env:
+            - name: PATH
+              value: "/opt/fabric/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             - name: FABRIC_CFG_PATH
               value: /etc/hyperledger/fabric/config
           volumeMounts:
@@ -40,3 +49,4 @@ spec:
         - name: channel-config
           configMap:
             name: channel-config
+            defaultMode: 0775  # 👈 This makes it executable

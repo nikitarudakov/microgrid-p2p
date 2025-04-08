@@ -52,7 +52,7 @@ echo "📦 Deploying Orderer"
 helm install $NAMESPACE-orderer0 ./orderer \
   --set name=orn1 \
   --set namespace="$NAMESPACE" \
-  --set ports.listen=7051 \
+  --set ports.listen=7050 \
   --set ports.admin=9443 \
   --set org.address=$NAMESPACE.svc.cluster.local
 

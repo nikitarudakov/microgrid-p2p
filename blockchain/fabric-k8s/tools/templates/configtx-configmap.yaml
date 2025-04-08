@@ -6,3 +6,9 @@ metadata:
 data:
   configtx.yaml: |
 {{ .Files.Get "config/configtx-config.yaml" | indent 4 }}
+  core.yaml: |
+{{ .Files.Get "config/core-default-config.yaml" | indent 4 }}
+  orderer.yaml: |
+{{ .Files.Get "config/orderer-default-config.yaml" | indent 4 }}
+  createJoin.sh: |
+{{ .Files.Get "scripts/create-channel-config.sh" | indent 4 }}

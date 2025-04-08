@@ -47,7 +47,7 @@ fabric-ca-client enroll \
   -d
 
 echo "⏳ Waiting for Nodes Private Key to become ready..."
-sleep 5
+sleep 10
 
 # Rename node key and certs
 KEY_PATH="${FABRIC_CA_CLIENT_HOME}/${NODE_MSPDIR}"

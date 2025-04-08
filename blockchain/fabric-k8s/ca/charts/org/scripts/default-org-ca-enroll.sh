@@ -10,6 +10,7 @@ clean_msp() {
 }
 
 export CA_HOST="{{ .Values.name }}.${ORG_DOMAIN}:7054"
+export NODE_DIR="{{ .Values.node.type}}s/{{ .Values.node.name }}.${ORG_DOMAIN}"
 export NODE_MSPDIR="{{ .Values.node.type}}s/{{ .Values.node.name }}.${ORG_DOMAIN}/msp"
 
 echo "⏳ Waiting for Org CA to become ready..."
@@ -45,6 +46,14 @@ fabric-ca-client enroll \
   --tls.certfiles "${FABRIC_CA_HOME}/ca-cert.pem" \
   --mspdir "msp" \
   -d
+
+mkdir -p "${FABRIC_CA_CLIENT_HOME}/users/Admin@${ORG_DOMAIN}/msp"
+clean_msp "${FABRIC_CA_CLIENT_HOME}/users/Admin@${ORG_DOMAIN}/msp"
+fabric-ca-client enroll \
+  -u "https://{{ .Values.org.admin.user }}:{{ .Values.org.admin.pass }}@${CA_HOST}" \
+  --tls.certfiles "${FABRIC_CA_HOME}/ca-cert.pem" \
+  --mspdir "users/Admin@${ORG_DOMAIN}/msp" \
+  -d
 echo "✅ Org Admin enrolled"
 
 echo "📌 Registering node '{{ .Values.node.name }}'..."
@@ -70,9 +79,11 @@ echo "✅ Node '{{ .Values.node.name }}' enrolled with Org CA"
 echo "📁 Copying Node MSP config.yaml..."
 cp /tmp/config/config.yaml "${FABRIC_CA_CLIENT_HOME}/${NODE_MSPDIR}/config.yaml"
 cp /tmp/config/config.yaml "${FABRIC_CA_CLIENT_HOME}/msp/config.yaml"
+cp /tmp/config/config.yaml "${FABRIC_CA_CLIENT_HOME}/users/Admin@${ORG_DOMAIN}/msp/config.yaml"
 echo "✅ MSP configuration copied"
 
+# TODO: Copy TLS and CA ROOT certificates
 echo "📁 Copying Root CA certificates..."
-mkdir -p ${FABRIC_CA_CLIENT_HOME}/msp/cacerts
 mkdir -p ${FABRIC_CA_CLIENT_HOME}/msp/tlscacerts
+cp ${FABRIC_CA_CLIENT_HOME}/${NODE_DIR}/tls/ca.crt ${FABRIC_CA_CLIENT_HOME}/msp/tlscacerts/tls-ca-cert.pem
 echo "✅ Root CA certificates copied"
