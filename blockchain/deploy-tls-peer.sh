@@ -53,4 +53,5 @@ kubectl wait --for=condition=complete job/org-ca-enrollment -n "$NAMESPACE" --ti
 echo "📦 Deploying Peer"
 helm install "$NAMESPACE-peer0" ./peer \
   --set namespace="$NAMESPACE" \
-  --set msp.id="${NAMESPACE}MSP"
+  --set msp.id="${NAMESPACE^}MSP" \
+  --set org.address=${NAMESPACE}.svc.cluster.local
